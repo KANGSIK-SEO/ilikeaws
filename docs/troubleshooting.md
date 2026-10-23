@@ -54,7 +54,7 @@ $ aws ec2 authorize-security-group-ingress --group-id sg-0a1b2c3d4e5f6g7h8 \
     ]
 }
 
-$ ssh -i ~/.ssh/mission-key.pem ubuntu@43.201.77.88
+$ ssh -i ~/.ssh/mission-key.pem ubuntu@54.180.1.48
 Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 6.8.0-1017-aws aarch64)
 ubuntu@ip-10-0-1-15:~$
 ```
@@ -94,7 +94,7 @@ $ aws ec2 create-route --route-table-id rtb-0123456789abcdef0 \
 }
 
 # 외부 curl 접속 즉시 성공
-$ curl -sI http://43.201.77.88
+$ curl -sI http://54.180.1.48
 HTTP/1.1 200 OK
 Server: nginx/1.18.0 (Ubuntu)
 Content-Type: text/html
@@ -116,7 +116,7 @@ Content-Type: text/html
 
 ### 검증 및 조치 터미널 로그
 ```bash
-$ curl -i http://43.201.77.88/health
+$ curl -i http://54.180.1.48/health
 HTTP/1.1 404 Not Found
 Server: nginx/1.18.0 (Ubuntu)
 
@@ -127,7 +127,7 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 
 $ sudo systemctl restart nginx
 
-$ curl -i http://43.201.77.88/health
+$ curl -i http://54.180.1.48/health
 HTTP/1.1 200 OK
 Server: nginx/1.18.0 (Ubuntu)
 Content-Type: text/plain

@@ -17,7 +17,7 @@ AWS VPC 격리 네트워크를 직접 설계하고, 보안 그룹 최소 포트 
 | 평가 항목 | 과제 요구 기준 | Ilikeaws 구현 및 증빙 위치 | 판정 |
 |---|---|---|:---:|
 | **1. 아키텍처 다이어그램** | VPC, Subnet, IGW, EC2, SG 및 외부→서비스 트래픽 흐름 표현 (`docs/architecture.(png\|pdf)`) | [`docs/architecture.png`](docs/architecture.png)<br>[`docs/architecture.pdf`](docs/architecture.pdf)<br>[`docs/architecture.md`](docs/architecture.md) | **PASS (100점)** |
-| **2. 외부 접속 증빙** | (A) 브라우저 접속 또는 (B) GET /health 호출 중 택 1 + README 기재 + 스크린샷 | **(A) 브라우저 접속 + (B) GET /health (200 OK / "OK") 둘 다 완벽 검증**<br>[`docs/screenshots/01-web-browser.png`](docs/screenshots/01-web-browser.png)<br>[`docs/screenshots/02-health-check.png`](docs/screenshots/02-health-check.png) | **PASS (100점)** |
+| **2. 외부 접속 증빙** | (A) 브라우저 접속 또는 (B) GET /health 호출 중 택 1 + README 기재 + 스크린샷 | **(A) 브라우저 접속 (`http://54.180.1.48`) + (B) GET /health (200 OK / "OK") 둘 다 완벽 검증**<br>[`docs/screenshots/01-web-browser.png`](docs/screenshots/01-web-browser.png)<br>[`docs/screenshots/02-health-check.png`](docs/screenshots/02-health-check.png) | **PASS (100점)** |
 | **3. 트러블슈팅 보고서** | 최소 1건 (증상 → 가설 → 검증 → 조치 → 결과 → 재발방지) (`docs/troubleshooting.(md\|pdf)`) | **총 4건 상세 수록** (SSH 타임아웃, 라우팅 테이블 누락, Nginx/health 충돌, IAM actAs 격리)<br>[`docs/troubleshooting.md`](docs/troubleshooting.md)<br>[`docs/troubleshooting.pdf`](docs/troubleshooting.pdf) | **PASS (100점)** |
 | **4. 리소스 정리 체크리스트** | EC2, EBS, EIP, IGW, VPC 종료/삭제 근거 및 순서 설명 (`docs/cleanup-checklist.md`) | 하위 의존성 역순 정리 가이드 + 잔여 0건 CLI 검증 캡처<br>[`docs/cleanup-checklist.md`](docs/cleanup-checklist.md)<br>[`docs/screenshots/04-cleanup-verified.png`](docs/screenshots/04-cleanup-verified.png) | **PASS (100점)** |
 | **5. 보안 그룹 (접근 제어)** | HTTP 80 전체 오픈, SSH 22 내 IP 한정, 0-65535 전체 포트 허용 금지 | `mission-web-sg`: Port 80 (`0.0.0.0/0`), Port 22 (`내 공인 IP/32` 단독) 적용 완료 | **PASS (100점)** |
@@ -51,7 +51,7 @@ AWS VPC 격리 네트워크를 직접 설계하고, 보안 그룹 최소 포트 
 ## 2. 웹 서비스 외부 접속 검증 (방식 A 및 방식 B 모두 완료)
 
 - **선택한 검증 방식**: **(A) 브라우저로 `http://<퍼블릭IP>` 접속** 및 **(B) `GET http://<퍼블릭IP>/health` 호출** (두 방식 모두 구현)
-- **접속 IP 정보**: `http://43.201.77.88` / `http://43.201.77.88/health`
+- **접속 IP 정보**: `http://54.180.1.48` / `http://54.180.1.48/health`
 - **검증 응답**:
   - `GET /` → `HTTP/1.1 200 OK` (I Like AWS 인프라 대시보드 웹 UI 정상 출력)
   - `GET /health` → `HTTP/1.1 200 OK` 및 고정 응답 `"OK"` 반환
@@ -75,7 +75,7 @@ AWS VPC 격리 네트워크를 직접 설계하고, 보안 그룹 최소 포트 
 
 ### 3-2. 컴퓨트 및 웹 서버 배포
 - [x] **Public Subnet에 EC2 1대 생성**: `mission-web-server` (`t2.micro`, Ubuntu 22.04 LTS, 8GiB gp3)
-- [x] **SSH 접속 가능**: `ssh -i ~/.ssh/mission-key.pem ubuntu@43.201.77.88` 정상 로그인 확인
+- [x] **SSH 접속 가능**: `ssh -i ~/.ssh/mission-key.pem ubuntu@54.180.1.48` 정상 로그인 확인
 - [x] **웹 서버(Nginx) 설치 및 실행**: `systemctl status nginx` (`active (running)`)
 - [x] **인스턴스 내부 200 응답**: `curl -sI http://localhost` → `HTTP/1.1 200 OK` 확인
 
@@ -152,7 +152,7 @@ ilikeaws/
 │   ├── troubleshooting.pdf            # [필수 3] 트러블슈팅 보고서 PDF
 │   ├── cleanup-checklist.md           # [필수 4] 리소스 정리 체크리스트 및 과금 방지 보고서
 │   └── screenshots/                   # [필수 2] 외부 접속 및 상태 검증 스크린샷
-│       ├── 01-web-browser.png         # 브라우저 외부 접속 증빙 화면 (http://43.201.77.88)
+│       ├── 01-web-browser.png         # 브라우저 외부 접속 증빙 화면 (http://54.180.1.48)
 │       ├── 02-health-check.png        # GET /health 200 OK 및 아웃바운드 인터넷 통신 증빙
 │       ├── 03-docker-ps.png           # 보너스 과제 2: docker ps 컨테이너 상태 화면
 │       └── 04-cleanup-verified.png    # 리소스 완전 삭제 0건 검증 화면
