@@ -1,0 +1,8 @@
+services:
+  web:
+    build: .
+    image: ilikeaws-web:latest
+    container_name: ilikeaws-web-server
+    restart: always
+    ports:
+      - "80:80"

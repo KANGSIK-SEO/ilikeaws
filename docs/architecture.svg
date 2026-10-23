@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" width="1000" height="680" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="1000" height="680" fill="#F8FAFC" rx="16"/>
+
+  <!-- Title & Banner -->
+  <rect x="0" y="0" width="1000" height="8" fill="#FF9900"/>
+  <text x="500" y="42" text-anchor="middle" font-size="22" font-weight="800" fill="#232F3E">AWS 웹 서비스 아키텍처 다이어그램</text>
+  <text x="500" y="66" text-anchor="middle" font-size="13" fill="#545B64">서울 리전 (ap-northeast-2) · VPC 격리 네트워크 &amp; 최소권한 보안 구성</text>
+
+  <!-- Defs for arrowheads & drop shadows -->
+  <defs>
+    <marker id="arrowBlue" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#0073BB"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#FF9900"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1D8102"/>
+    </marker>
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- ── 1. Internet / Clients (Top) ── -->
+  <!-- Public Users -->
+  <rect x="220" y="95" width="240" height="60" rx="12" fill="#FFFFFF" stroke="#0073BB" stroke-width="1.8" filter="url(#cardShadow)"/>
+  <text x="340" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#0073BB">🌐 외부 사용자 (Internet)</text>
+  <text x="340" y="142" text-anchor="middle" font-size="12" fill="#545B64">0.0.0.0/0 (웹 브라우저 / curl)</text>
+
+  <!-- Admin User -->
+  <rect x="540" y="95" width="240" height="60" rx="12" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.8" filter="url(#cardShadow)"/>
+  <text x="660" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#232F3E">💻 관리자 PC (Admin)</text>
+  <text x="660" y="142" text-anchor="middle" font-size="12" fill="#545B64">내 공인 IP/32 (SSH 터미널)</text>
+
+  <!-- Arrows: Internet → IGW -->
+  <path d="M340,155 L340,185 L460,185 L460,205" fill="none" stroke="#0073BB" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrowBlue)"/>
+  <text x="365" y="180" font-size="11" font-weight="600" fill="#0073BB">HTTP :80</text>
+
+  <!-- Arrows: Admin → IGW -->
+  <path d="M660,155 L660,185 L540,185 L540,205" fill="none" stroke="#232F3E" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrowBlue)"/>
+  <text x="605" y="180" font-size="11" font-weight="600" fill="#232F3E">SSH :22</text>
+
+  <!-- ── 2. AWS Region Boundary ── -->
+  <rect x="50" y="195" width="900" height="465" rx="16" fill="#F2F3F3" stroke="#232F3E" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="80" y="222" font-size="13" font-weight="800" fill="#232F3E">AWS Region: Seoul (ap-northeast-2)</text>
+
+  <!-- ── 3. Internet Gateway ── -->
+  <rect x="400" y="210" width="200" height="52" rx="10" fill="#FF9900" filter="url(#cardShadow)"/>
+  <text x="500" y="233" text-anchor="middle" font-size="14" font-weight="800" fill="#FFFFFF">🔀 Internet Gateway</text>
+  <text x="500" y="251" text-anchor="middle" font-size="11" fill="#FFF2DC">mission-igw (VPC 양방향 통신)</text>
+
+  <!-- ── 4. VPC Boundary ── -->
+  <rect x="70" y="275" width="860" height="365" rx="14" fill="#FFFFFF" stroke="#FF9900" stroke-width="2.2" filter="url(#cardShadow)"/>
+  <rect x="70" y="275" width="260" height="30" rx="14" fill="#FF9900"/>
+  <text x="85" y="295" font-size="12" font-weight="800" fill="#FFFFFF">VPC: mission-vpc (10.0.0.0/16)</text>
+
+  <!-- ── 5. Public Subnet Boundary ── -->
+  <rect x="95" y="320" width="810" height="300" rx="12" fill="#EBF8FF" stroke="#0073BB" stroke-width="2"/>
+  <text x="115" y="342" font-size="13" font-weight="800" fill="#0073BB">Public Subnet (10.0.1.0/24) · AZ: ap-northeast-2a</text>
+
+  <!-- Route Table Box inside Subnet -->
+  <rect x="115" y="360" width="250" height="90" rx="8" fill="#FFFFFF" stroke="#0073BB" stroke-width="1.2" filter="url(#cardShadow)"/>
+  <text x="130" y="380" font-size="12" font-weight="700" fill="#0073BB">📋 Route Table (mission-rtb)</text>
+  <text x="130" y="400" font-size="11" fill="#232F3E">10.0.0.0/16 → local</text>
+  <text x="130" y="418" font-size="11" font-weight="700" fill="#1D8102">0.0.0.0/0 → mission-igw</text>
+  <text x="130" y="436" font-size="10" fill="#545B64">✔ 아웃바운드 인터넷 경로 보장</text>
+
+  <!-- IAM Role / User Box inside VPC -->
+  <rect x="115" y="465" width="250" height="135" rx="8" fill="#FFFFFF" stroke="#D13212" stroke-width="1.2" filter="url(#cardShadow)"/>
+  <text x="130" y="487" font-size="12" font-weight="700" fill="#D13212">🔑 IAM 최소권한 정책</text>
+  <text x="130" y="507" font-size="11" fill="#232F3E">주체: <strong>mission-deployer</strong></text>
+  <text x="130" y="525" font-size="11" fill="#1D8102">✔ EC2/VPC/SG 전용 권한 허용</text>
+  <text x="130" y="543" font-size="11" fill="#D13212">✖ AdministratorAccess 금지</text>
+  <text x="130" y="561" font-size="11" fill="#545B64">✖ S3, RDS, DynamoDB 미부여</text>
+  <text x="130" y="582" font-size="10" fill="#0073BB">최소권한(Least Privilege) 원칙 준수</text>
+
+  <!-- ── 6. Security Group Box (Firewall) ── -->
+  <rect x="395" y="360" width="490" height="240" rx="10" fill="#FFFFFF" stroke="#E07706" stroke-width="1.8" filter="url(#cardShadow)"/>
+  <text x="415" y="384" font-size="13" font-weight="800" fill="#E07706">🛡️ Security Group: mission-web-sg (Stateful)</text>
+
+  <!-- Inbound Rules Table inside SG -->
+  <rect x="415" y="398" width="450" height="58" rx="6" fill="#FFF8EE" stroke="#FBD38D" stroke-width="1"/>
+  <text x="425" y="416" font-size="11" font-weight="700" fill="#7B341E">[ Inbound Rules ]</text>
+  <text x="425" y="433" font-size="11" fill="#232F3E">Port 80 (HTTP)   | TCP | Source: 0.0.0.0/0 (전체 허용)</text>
+  <text x="425" y="448" font-size="11" fill="#232F3E">Port 22 (SSH)    | TCP | Source: 내 공인 IP/32 (단독 허용)</text>
+
+  <!-- ── 7. EC2 Instance Box ── -->
+  <rect x="415" y="470" width="450" height="115" rx="8" fill="#F8FAFC" stroke="#232F3E" stroke-width="1.5"/>
+  <text x="430" y="493" font-size="13" font-weight="800" fill="#232F3E">🖥️ EC2 Instance: mission-web-server</text>
+  <text x="430" y="512" font-size="11" fill="#545B64">유형: <strong>t2.micro / t3.micro</strong> (vCPU 1, Mem 1GiB, Free Tier)</text>
+  <text x="430" y="530" font-size="11" fill="#545B64">OS: <strong>Ubuntu 22.04 LTS</strong> | 스토리지: <strong>8~10 GiB gp3 EBS</strong></text>
+  <text x="430" y="548" font-size="11" fill="#0073BB">웹 서버: <strong>Nginx 1.x</strong> (Port 80) / Docker Container (옵션)</text>
+  <text x="430" y="567" font-size="11" font-weight="700" fill="#1D8102">고정 외부 IP: Elastic IP (EIP) 연결 완료</text>
+
+  <!-- Traffic Line: IGW to EC2 through SG -->
+  <path d="M500,262 L500,340 L620,340 L620,360" fill="none" stroke="#FF9900" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+  <text x="515" y="333" font-size="11" font-weight="700" fill="#FF9900">Traffic Routing (IGW → SG → EC2)</text>
+</svg>
