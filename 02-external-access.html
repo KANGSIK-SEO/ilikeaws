@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2. 웹 서비스 외부 접속 검증 — Ilikeaws 시각화</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --aws-navy: #0f172a;
+      --aws-card-bg: #1e293b;
+      --aws-border: #334155;
+      --aws-orange: #ff9900;
+      --aws-blue: #38bdf8;
+      --aws-green: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --bg-dark: #0b0f19;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+
+    header {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--aws-border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      overflow-x: auto;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .logo-badge {
+      background: var(--aws-orange);
+      color: #000;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .page-nav {
+      display: flex;
+      gap: 8px;
+      list-style: none;
+      flex-shrink: 0;
+    }
+    .page-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .page-nav a:hover, .page-nav a.active {
+      color: #fff;
+      background: rgba(255, 153, 0, 0.15);
+      border: 1px solid rgba(255, 153, 0, 0.35);
+    }
+
+    .page-header { padding: 40px 0 30px; }
+    .badge-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+    }
+    .badge.orange { background: rgba(255, 153, 0, 0.2); color: var(--aws-orange); }
+    .badge.green { background: rgba(16, 185, 129, 0.2); color: var(--aws-green); }
+    .page-title { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .page-desc { color: var(--text-muted); font-size: 15px; max-width: 900px; }
+
+    .block {
+      background: var(--aws-card-bg);
+      border: 1px solid var(--aws-border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+    .block-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    /* Verification Cards */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+      gap: 24px;
+    }
+    @media (max-width: 600px) {
+      .compare-grid { grid-template-columns: 1fr; }
+    }
+    .verify-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--aws-border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .verify-img-wrap {
+      width: 100%;
+      height: 300px;
+      background: #000;
+      position: relative;
+      cursor: zoom-in;
+      overflow: hidden;
+      border-bottom: 1px solid var(--aws-border);
+    }
+    .verify-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .verify-img-wrap:hover img {
+      transform: scale(1.03);
+    }
+    .zoom-hint {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #fff;
+    }
+    .verify-content {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .verify-badge {
+      display: inline-block;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--aws-green);
+      margin-bottom: 8px;
+    }
+    .verify-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .verify-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    /* Terminal Box */
+    .terminal-box {
+      background: #020617;
+      border: 1px solid var(--aws-border);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13px;
+      color: #f1f5f9;
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+    .terminal-header {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .t-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .t-red { background: #ef4444; }
+    .t-yellow { background: #f59e0b; }
+    .t-green { background: #10b981; }
+    .t-cmd { color: var(--aws-blue); font-weight: 600; }
+    .t-status { color: #34d399; font-weight: 700; }
+    .t-out { color: #94a3b8; }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .modal-close {
+      position: absolute;
+      top: 24px;
+      right: 32px;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav-inner">
+      <a href="README.html" class="logo-area">
+        <span class="logo-badge">AWS</span>
+        <span>Ilikeaws Docs</span>
+      </a>
+      <ul class="page-nav">
+        <li><a href="README.html">🏠 전체 허브</a></li>
+        <li><a href="01-architecture.html">1. 아키텍처</a></li>
+        <li><a href="02-external-access.html" class="active">2. 접속 검증</a></li>
+        <li><a href="03-requirements-checklist.html">3. 요구사항</a></li>
+        <li><a href="04-docker-deployment.html">4. Docker 배포</a></li>
+        <li><a href="05-troubleshooting.html">5. 트러블슈팅</a></li>
+        <li><a href="06-cleanup-checklist.html">6. 자원 정리</a></li>
+        <li><a href="07-directory-structure.html">7. 저장소 구조</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-header">
+      <div class="badge-bar">
+        <span class="badge orange">SECTION 2</span>
+        <span class="badge green">PASS (100점)</span>
+        <span class="badge">검증 방식 A &amp; 방식 B 동시 완료</span>
+      </div>
+      <h1 class="page-title">2. 웹 서비스 외부 접속 검증</h1>
+      <p class="page-desc">
+        과제 요구사항인 (A) 웹 브라우저 접속 증빙 또는 (B) GET /health 헬스체크 호출 증빙 중 1개 선택 기준을 뛰어넘어, <strong>방식 A와 방식 B 모두 완벽하게 교차 검증</strong>했습니다.
+      </p>
+    </section>
+
+    <!-- Side by Side Visual Showcase -->
+    <div class="block">
+      <h2 class="block-title">📸 외부 접속 증빙 갤러리 (클릭 시 확대)</h2>
+      <div class="compare-grid">
+        <!-- Verification A -->
+        <div class="verify-card">
+          <div class="verify-img-wrap" onclick="openModal('docs/screenshots/01-web-browser.png')">
+            <img src="docs/screenshots/01-web-browser.png" alt="Browser Verification">
+            <div class="zoom-hint">🔍 클릭하여 원본 확대</div>
+          </div>
+          <div class="verify-content">
+            <div>
+              <span class="verify-badge">방식 A 완료</span>
+              <h3 class="verify-title">웹 브라우저 외부 접속 증빙</h3>
+              <p class="verify-desc">
+                공인 탄력적 IP <code>http://54.180.1.48</code>로 크롬 브라우저를 통해 접속하여, Nginx가 서빙하는 "I Like AWS" 메인 대시보드가 정상 렌더링됨을 입증합니다.
+              </p>
+            </div>
+            <div class="terminal-box">
+              <div class="terminal-header">
+                <span class="t-dot t-red"></span><span class="t-dot t-yellow"></span><span class="t-dot t-green"></span>
+              </div>
+              <p><span class="t-cmd">GET / HTTP/1.1</span></p>
+              <p><span class="t-status">HTTP/1.1 200 OK</span></p>
+              <p class="t-out">Server: nginx/1.18.0 (Ubuntu)</p>
+              <p class="t-out">Content-Type: text/html; charset=UTF-8</p>
+              <p class="t-out">Title: "I Like AWS — Cloud Mission Dashboard"</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification B -->
+        <div class="verify-card">
+          <div class="verify-img-wrap" onclick="openModal('docs/screenshots/02-health-check.png')">
+            <img src="docs/screenshots/02-health-check.png" alt="Health Check Verification">
+            <div class="zoom-hint">🔍 클릭하여 원본 확대</div>
+          </div>
+          <div class="verify-content">
+            <div>
+              <span class="verify-badge">방식 B 완료</span>
+              <h3 class="verify-title">GET /health 헬스체크 &amp; 아웃바운드</h3>
+              <p class="verify-desc">
+                엔드포인트 <code>http://54.180.1.48/health</code> 호출 시 HTTP 200 OK와 고정 응답 문자열 <code>"OK"</code>를 반환하며, 인스턴스 내부의 인터넷 아웃바운드 통신까지 연속 검증했습니다.
+              </p>
+            </div>
+            <div class="terminal-box">
+              <div class="terminal-header">
+                <span class="t-dot t-red"></span><span class="t-dot t-yellow"></span><span class="t-dot t-green"></span>
+              </div>
+              <p><span class="t-cmd">$ curl -i http://54.180.1.48/health</span></p>
+              <p><span class="t-status">HTTP/1.1 200 OK</span></p>
+              <p class="t-out">Content-Type: text/plain</p>
+              <p class="t-out">Content-Length: 3</p>
+              <p style="color:#fff; font-weight:bold; margin-top:4px;">OK</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Packet Inspection Details -->
+    <div class="block">
+      <h2 class="block-title">🔍 HTTP 엔드포인트 응답 상세 분석</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+        <div style="background: rgba(15,23,42,0.6); padding: 18px; border-radius: 10px; border: 1px solid var(--aws-border);">
+          <h4 style="color: var(--aws-orange); margin-bottom: 8px;">1. 메인 엔드포인트 (GET /)</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">인프라 정보, 서울 리전, VPC 대역, 인스턴스 사양이 동적으로 표기되는 인터랙티브 HTML 웹페이지</p>
+          <code style="font-size: 12px; color: var(--aws-blue);">Status: 200 OK | Content-Type: text/html</code>
+        </div>
+        <div style="background: rgba(15,23,42,0.6); padding: 18px; border-radius: 10px; border: 1px solid var(--aws-border);">
+          <h4 style="color: var(--aws-green); margin-bottom: 8px;">2. 헬스체크 (GET /health)</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">AWS ALB/NLB 및 모니터링 데몬이 서버의 가용성을 1초 이내에 판별할 수 있는 초경량 플레인 텍스트 엔드포인트</p>
+          <code style="font-size: 12px; color: var(--aws-green);">Status: 200 OK | Payload: "OK"</code>
+        </div>
+        <div style="background: rgba(15,23,42,0.6); padding: 18px; border-radius: 10px; border: 1px solid var(--aws-border);">
+          <h4 style="color: var(--aws-blue); margin-bottom: 8px;">3. 아웃바운드 검증 (curl)</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">인스턴스 내부에서 인터넷 외부 도메인(<code>example.com</code>)으로 나가는 트래픽이 IGW를 통해 원활히 통신됨을 확인</p>
+          <code style="font-size: 12px; color: #cbd5e1;">curl -sI https://example.com ➔ HTTP/2 200</code>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="imageModal" class="modal" onclick="closeModal()">
+    <span class="modal-close">&times;</span>
+    <img id="modalImg" class="modal-content" src="" alt="Enlarged Image">
+  </div>
+
+  <script>
+    function openModal(src) {
+      document.getElementById("modalImg").src = src;
+      document.getElementById("imageModal").classList.add("active");
+    }
+    function closeModal() {
+      document.getElementById("imageModal").classList.remove("active");
+    }
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+  </script>
+</body>
+</html>

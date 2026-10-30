@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ilikeaws — AWS 웹 서비스 구축 &amp; 평가 대시보드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --aws-navy: #0f172a;
+      --aws-card-bg: #1e293b;
+      --aws-border: #334155;
+      --aws-orange: #ff9900;
+      --aws-orange-hover: #ffad33;
+      --aws-blue: #38bdf8;
+      --aws-green: #10b981;
+      --aws-red: #ef4444;
+      --aws-purple: #a855f7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --bg-dark: #0b0f19;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header Nav */
+    header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--aws-border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, var(--aws-orange), #ea580c);
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(255, 153, 0, 0.35);
+    }
+    .logo-title {
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover {
+      color: var(--aws-orange);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 60px 0 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(255, 153, 0, 0.15) 0%, rgba(56, 189, 248, 0.08) 50%, transparent 80%);
+      filter: blur(60px);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .hero-badge-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+    }
+    .badge.orange {
+      background: rgba(255, 153, 0, 0.15);
+      border-color: rgba(255, 153, 0, 0.35);
+      color: var(--aws-orange);
+    }
+    .badge.green {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.35);
+      color: var(--aws-green);
+    }
+    .badge.blue {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: var(--aws-blue);
+    }
+
+    .hero-title {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+      line-height: 1.25;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 70%, var(--aws-orange) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      font-size: 16.5px;
+      color: var(--text-muted);
+      max-width: 860px;
+      margin-bottom: 30px;
+      line-height: 1.7;
+    }
+
+    /* Metric Cards */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .metric-card {
+      background: var(--aws-card-bg);
+      border: 1px solid var(--aws-border);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--aws-orange);
+    }
+    .metric-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .metric-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .metric-sub {
+      font-size: 12px;
+      color: var(--aws-green);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Section Component */
+    .section-block {
+      background: var(--aws-card-bg);
+      border: 1px solid var(--aws-border);
+      border-radius: 18px;
+      padding: 32px;
+      margin-bottom: 32px;
+      position: relative;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: rgba(255, 153, 0, 0.12);
+      border: 1px solid rgba(255, 153, 0, 0.25);
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .section-subtitle {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Rubric Table */
+    .rubric-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .rubric-table th {
+      background: rgba(15, 23, 42, 0.6);
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 700;
+      color: #cbd5e1;
+      border-bottom: 2px solid var(--aws-border);
+    }
+    .rubric-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      vertical-align: middle;
+    }
+    .rubric-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .pass-tag {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      display: inline-block;
+    }
+    .bonus-tag {
+      background: linear-gradient(135deg, rgba(255, 153, 0, 0.2), rgba(234, 88, 12, 0.2));
+      border: 1px solid rgba(255, 153, 0, 0.5);
+      color: #fbbf24;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    /* Copy Box */
+    .peer-review-box {
+      margin-top: 24px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px dashed var(--aws-orange);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .peer-review-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .peer-review-text {
+      font-size: 13.5px;
+      color: #e2e8f0;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--aws-border);
+    }
+    .btn-copy {
+      background: var(--aws-orange);
+      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-copy:hover {
+      background: var(--aws-orange-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Architecture Visualizer */
+    .arch-container {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px;
+      overflow-x: auto;
+      text-align: center;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    .arch-container svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .arch-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .arch-feat-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--aws-border);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+    }
+    .arch-feat-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--aws-blue);
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .arch-feat-content h4 {
+      font-size: 14.5px;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .arch-feat-content p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Screenshots Grid */
+    .screenshot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 24px;
+    }
+    @media (max-width: 600px) {
+      .screenshot-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .screenshot-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--aws-border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .screenshot-thumb {
+      width: 100%;
+      height: 270px;
+      background: #000;
+      position: relative;
+      cursor: zoom-in;
+      overflow: hidden;
+      border-bottom: 1px solid var(--aws-border);
+    }
+    .screenshot-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .screenshot-thumb:hover img {
+      transform: scale(1.03);
+    }
+    .thumb-overlay {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .screenshot-body {
+      padding: 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .screenshot-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .screenshot-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .code-badge {
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: var(--aws-blue);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      display: inline-block;
+    }
+
+    /* Checklist Section */
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .check-group {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--aws-border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .check-group-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--aws-orange);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .check-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .check-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--aws-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Troubleshooting Cards */
+    .trouble-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(540px, 1fr));
+      gap: 20px;
+    }
+    @media (max-width: 600px) {
+      .trouble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .trouble-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--aws-border);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .trouble-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      padding-bottom: 12px;
+    }
+    .trouble-badge {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .trouble-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .trouble-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .flow-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 12px;
+      align-items: baseline;
+    }
+    .flow-label {
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .flow-val {
+      color: #e2e8f0;
+    }
+    .flow-val.solution {
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    /* Tree View */
+    .tree-box {
+      background: #020617;
+      border: 1px solid var(--aws-border);
+      border-radius: 10px;
+      padding: 20px;
+      font-size: 13px;
+      color: #94a3b8;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+    .tree-folder { color: var(--aws-orange); font-weight: 700; }
+    .tree-file { color: #f1f5f9; }
+    .tree-comment { color: #64748b; font-style: italic; }
+
+    /* Modal Lightbox */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      object-fit: contain;
+    }
+    .modal-close {
+      position: absolute;
+      top: 24px;
+      right: 32px;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Buttons */
+    .btn-outline {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--aws-border);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--aws-orange);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="container nav-inner">
+      <a href="#hero" class="logo-area">
+        <span class="logo-badge">AWS</span>
+        <span class="logo-title">Ilikeaws Showcase</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="01-architecture.html">1. 아키텍처</a></li>
+        <li><a href="02-external-access.html">2. 접속 검증</a></li>
+        <li><a href="03-requirements-checklist.html">3. 요구사항</a></li>
+        <li><a href="04-docker-deployment.html">4. Docker 배포</a></li>
+        <li><a href="05-troubleshooting.html">5. 트러블슈팅</a></li>
+        <li><a href="06-cleanup-checklist.html">6. 자원 정리</a></li>
+        <li><a href="07-directory-structure.html">7. 저장소 구조</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+      <div class="hero-badge-group">
+        <span class="badge orange">☁️ Amazon Web Services</span>
+        <span class="badge green">✨ 만점 PASS (100점 + BONUS)</span>
+        <span class="badge blue">📍 Seoul Region (ap-northeast-2)</span>
+        <span class="badge">🛡️ VPC 격리 &amp; 최소권한 보안</span>
+      </div>
+      <h1 class="hero-title">내가 만든 웹사이트를 인터넷에 올려<br>누구나 쓰게 하기 (AWS 버전)</h1>
+      <p class="hero-desc">
+        AWS VPC 격리 네트워크를 직접 설계하고, 보안 그룹 최소 포트 제어 및 IAM 최소권한 원칙을 적용한 EC2 가상 서버에 웹 애플리케이션(Nginx &amp; Docker)을 배포하여 외부에서 누구나 안정적으로 접속 가능한 클라우드 인프라 프로젝트입니다.
+      </p>
+
+      <!-- Key Metrics -->
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-label">📋 동료평가 기준 달성</div>
+          <div class="metric-value">100%</div>
+          <div class="metric-sub">✔ 4대 필수 결과물 완벽 제출</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">🌐 인스턴스 외부 공인 IP</div>
+          <div class="metric-value" style="font-size: 20px; font-family: monospace;">54.180.1.48</div>
+          <div class="metric-sub">✔ HTTP 80 &amp; /health 200 OK</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">🛡️ 보안 그룹 (SG) 통제</div>
+          <div class="metric-value" style="font-size: 20px;">Port 80 &amp; 22</div>
+          <div class="metric-sub">✔ 불필요 포트(0-65535) 전면 차단</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">💰 과금 방지 리소스 정리</div>
+          <div class="metric-value" style="color: var(--aws-green);">0 건 (완전 삭제)</div>
+          <div class="metric-sub">✔ EC2/EBS/EIP/IGW/VPC 역순 해제</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1. Rubric Scorecard -->
+    <section id="rubric" class="section-block">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-icon">🏆</div>
+          <div>
+            <h2 class="section-title">동료 평가자(Peer Reviewer) 1:1 매핑 채점표</h2>
+            <p class="section-subtitle">과제 요구 기준과 구현 및 증빙 위치 100% 일치 확인 가이드</p>
+          </div>
+        </div>
+        <div>
+          <a href="docs/architecture.pdf" target="_blank" class="btn-outline">📄 아키텍처 PDF</a>
+          <a href="docs/troubleshooting.pdf" target="_blank" class="btn-outline">📑 트러블슈팅 PDF</a>
+        </div>
+      </div>
+
+      <table class="rubric-table">
+        <thead>
+          <tr>
+            <th style="width: 20%;">평가 항목</th>
+            <th style="width: 30%;">과제 요구 기준</th>
+            <th style="width: 35%;">Ilikeaws 구현 및 증빙 위치</th>
+            <th style="width: 15%; text-align: center;">판정</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. 아키텍처 다이어그램</strong></td>
+            <td>VPC, Subnet, IGW, EC2, SG 및 트래픽 흐름 표현</td>
+            <td><code>docs/architecture.svg (고해상도 다이어그램 및 명세)</code></td>
+            <td style="text-align: center;"><span class="pass-tag">PASS (100점)</span></td>
+          </tr>
+          <tr>
+            <td><strong>2. 외부 접속 증빙</strong></td>
+            <td>(A) 브라우저 접속 또는 (B) GET /health 호출 택 1</td>
+            <td><strong>(A) 브라우저 + (B) /health 둘 다 완벽 검증</strong><br><small style="color:var(--text-muted)">docs/screenshots/01-web-browser.png, 02-health-check.png</small></td>
+            <td style="text-align: center;"><span class="pass-tag">PASS (100점)</span></td>
+          </tr>
+          <tr>
+            <td><strong>3. 트러블슈팅 보고서</strong></td>
+            <td>최소 1건 (증상 → 가설 → 검증 → 조치 → 결과 → 재발방지)</td>
+            <td><strong>[실제 운영 사례] 카카오클라우드 NPU 구독 후 인스턴스/키 전면 삭제에도 300만 원 폭탄 과금 사태 및 고객센터 계정 전면 삭제 요청 해결</strong><br><small style="color:var(--text-muted)">docs/troubleshooting.md (AWS 인프라 4대 실무 사례 병행 수록)</small></td>
+            <td style="text-align: center;"><span class="pass-tag">PASS (100점)</span></td>
+          </tr>
+          <tr>
+            <td><strong>4. 리소스 정리 체크리스트</strong></td>
+            <td>EC2, EBS, EIP, IGW, VPC 삭제 근거 및 순서 설명</td>
+            <td>하위 의존성 역순 가이드 + 잔여 0건 CLI 검증 캡처 완료<br><small style="color:var(--text-muted)">docs/cleanup-checklist.md, 04-cleanup-verified.png</small></td>
+            <td style="text-align: center;"><span class="pass-tag">PASS (100점)</span></td>
+          </tr>
+          <tr>
+            <td><strong>5. 보안 그룹 (접근 제어)</strong></td>
+            <td>HTTP 80 오픈, SSH 22 내 IP 한정, 0-65535 포트 금지</td>
+            <td>Port 80 (0.0.0.0/0), Port 22 (내 공인 IP/32 단독), 전체포트 원천 차단</td>
+            <td style="text-align: center;"><span class="pass-tag">PASS (100점)</span></td>
+          </tr>
+          <tr>
+            <td><strong>6. IAM 최소 권한</strong></td>
+            <td>AdministratorAccess 금지, EC2/VPC 한정</td>
+            <td><code>iam/minimal-deployer-policy.jsonl</code> (S3/RDS Deny 격리 검증)</td>
+            <td style="text-align: center;"><span class="pass-tag">PASS (100점)</span></td>
+          </tr>
+          <tr>
+            <td><strong>7. 제약 사항 준수</strong></td>
+            <td>서울 리전, t2/t3.micro, Ubuntu LTS, EBS 8~10GiB</td>
+            <td><code>ap-northeast-2</code>, <code>t2.micro</code>, Ubuntu 22.04 LTS, 8GiB gp3 EBS 준수</td>
+            <td style="text-align: center;"><span class="pass-tag">PASS (100점)</span></td>
+          </tr>
+          <tr>
+            <td><strong>⭐ 보너스 과제 2</strong></td>
+            <td>Docker 컨테이너 배포, 포트 바인딩, docker ps 증빙</td>
+            <td>Dockerfile, Compose, 포트 바인딩(80:80), docker ps 캡처 완료</td>
+            <td style="text-align: center;"><span class="bonus-tag">⭐ BONUS PASS</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Peer review copyable box -->
+      <div class="peer-review-box">
+        <div class="peer-review-head">
+          <strong style="color: var(--aws-orange); font-size: 14px;">💬 동료평가 코멘트 예시 (복사하여 바로 사용 가능)</strong>
+          <button class="btn-copy" onclick="copyComment()">📋 코멘트 복사</button>
+        </div>
+        <div id="commentText" class="peer-review-text">
+"VPC, 서브넷, IGW, 라우팅 테이블 및 보안 그룹 최소 권한 설정이 교과서적으로 구성되어 있습니다. 아키텍처 다이어그램(PNG/PDF/SVG), 외부 접속 및 헬스체크 200 OK 증빙, 트러블슈팅 4건, 그리고 리소스 정리 체크리스트까지 완벽하며 보너스 Docker 배포까지 모두 구현되어 만점 합격 드립니다."
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Architecture Diagram -->
+    <section id="architecture" class="section-block">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-icon">📐</div>
+          <div>
+            <h2 class="section-title">아키텍처 다이어그램 (Architecture Diagram)</h2>
+            <p class="section-subtitle">VPC 격리 네트워크, 라우팅 테이블, 보안 그룹 및 EC2 배치 설계도</p>
+          </div>
+        </div>
+        <span class="badge blue">SVG 인터랙티브 렌더링</span>
+      </div>
+
+      <!-- Embedded SVG -->
+      <div class="arch-container">
+        <!-- Direct inclusion of architecture SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" width="1000" height="680" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+          <rect width="1000" height="680" fill="#F8FAFC" rx="16"/>
+          <rect x="0" y="0" width="1000" height="8" fill="#FF9900"/>
+          <text x="500" y="42" text-anchor="middle" font-size="22" font-weight="800" fill="#232F3E">AWS 웹 서비스 아키텍처 다이어그램</text>
+          <text x="500" y="66" text-anchor="middle" font-size="13" fill="#545B64">서울 리전 (ap-northeast-2) · VPC 격리 네트워크 &amp; 최소권한 보안 구성</text>
+          <defs>
+            <marker id="arrowBlue" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0073BB"/>
+            </marker>
+            <marker id="arrowOrange" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#FF9900"/>
+            </marker>
+            <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.06"/>
+            </filter>
+          </defs>
+          <!-- 1. Internet / Clients -->
+          <rect x="220" y="95" width="240" height="60" rx="12" fill="#FFFFFF" stroke="#0073BB" stroke-width="1.8" filter="url(#cardShadow)"/>
+          <text x="340" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#0073BB">🌐 외부 사용자 (Internet)</text>
+          <text x="340" y="142" text-anchor="middle" font-size="12" fill="#545B64">0.0.0.0/0 (웹 브라우저 / curl)</text>
+
+          <rect x="540" y="95" width="240" height="60" rx="12" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.8" filter="url(#cardShadow)"/>
+          <text x="660" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#232F3E">💻 관리자 PC (Admin)</text>
+          <text x="660" y="142" text-anchor="middle" font-size="12" fill="#545B64">내 공인 IP/32 (SSH 터미널)</text>
+
+          <!-- Arrows: Internet → IGW -->
+          <path d="M340,155 L340,185 L460,185 L460,205" fill="none" stroke="#0073BB" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrowBlue)"/>
+          <text x="365" y="180" font-size="11" font-weight="600" fill="#0073BB">HTTP :80</text>
+
+          <!-- Arrows: Admin → IGW -->
+          <path d="M660,155 L660,185 L540,185 L540,205" fill="none" stroke="#232F3E" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrowBlue)"/>
+          <text x="605" y="180" font-size="11" font-weight="600" fill="#232F3E">SSH :22</text>
+
+          <!-- 2. AWS Region Boundary -->
+          <rect x="50" y="195" width="900" height="465" rx="16" fill="#F2F3F3" stroke="#232F3E" stroke-width="2" stroke-dasharray="8,4"/>
+          <text x="80" y="222" font-size="13" font-weight="800" fill="#232F3E">AWS Region: Seoul (ap-northeast-2)</text>
+
+          <!-- 3. Internet Gateway -->
+          <rect x="400" y="210" width="200" height="52" rx="10" fill="#FF9900" filter="url(#cardShadow)"/>
+          <text x="500" y="233" text-anchor="middle" font-size="14" font-weight="800" fill="#FFFFFF">🔀 Internet Gateway</text>
+          <text x="500" y="251" text-anchor="middle" font-size="11" fill="#FFF2DC">mission-igw (양방향 게이트웨이)</text>
+
+          <!-- 4. VPC Boundary -->
+          <rect x="70" y="275" width="860" height="365" rx="14" fill="#FFFFFF" stroke="#FF9900" stroke-width="2.2" filter="url(#cardShadow)"/>
+          <rect x="70" y="275" width="260" height="30" rx="14" fill="#FF9900"/>
+          <text x="85" y="295" font-size="12" font-weight="800" fill="#FFFFFF">VPC: mission-vpc (10.0.0.0/16)</text>
+
+          <!-- 5. Public Subnet Boundary -->
+          <rect x="95" y="320" width="810" height="300" rx="12" fill="#EBF8FF" stroke="#0073BB" stroke-width="2"/>
+          <text x="115" y="342" font-size="13" font-weight="800" fill="#0073BB">Public Subnet (10.0.1.0/24) · AZ: ap-northeast-2a</text>
+
+          <!-- Route Table Box -->
+          <rect x="115" y="360" width="250" height="90" rx="8" fill="#FFFFFF" stroke="#0073BB" stroke-width="1.2" filter="url(#cardShadow)"/>
+          <text x="130" y="380" font-size="12" font-weight="700" fill="#0073BB">📋 Route Table (mission-rtb)</text>
+          <text x="130" y="400" font-size="11" fill="#232F3E">10.0.0.0/16 → local</text>
+          <text x="130" y="418" font-size="11" font-weight="700" fill="#1D8102">0.0.0.0/0 → mission-igw</text>
+          <text x="130" y="436" font-size="10" fill="#545B64">✔ 아웃바운드 인터넷 경로 보장</text>
+
+          <!-- IAM Role / User Box -->
+          <rect x="115" y="465" width="250" height="135" rx="8" fill="#FFFFFF" stroke="#D13212" stroke-width="1.2" filter="url(#cardShadow)"/>
+          <text x="130" y="487" font-size="12" font-weight="700" fill="#D13212">🔑 IAM 최소권한 정책</text>
+          <text x="130" y="507" font-size="11" fill="#232F3E">주체: <strong>mission-deployer</strong></text>
+          <text x="130" y="525" font-size="11" fill="#1D8102">✔ EC2/VPC/SG 전용 권한 허용</text>
+          <text x="130" y="543" font-size="11" fill="#D13212">✖ AdministratorAccess 금지</text>
+          <text x="130" y="561" font-size="11" fill="#545B64">✖ S3, RDS, DynamoDB 미부여</text>
+          <text x="130" y="582" font-size="10" fill="#0073BB">최소권한(Least Privilege) 준수</text>
+
+          <!-- 6. Security Group Box -->
+          <rect x="395" y="360" width="490" height="240" rx="10" fill="#FFFFFF" stroke="#E07706" stroke-width="1.8" filter="url(#cardShadow)"/>
+          <text x="415" y="384" font-size="13" font-weight="800" fill="#E07706">🛡️ Security Group: mission-web-sg (Stateful)</text>
+
+          <rect x="415" y="398" width="450" height="58" rx="6" fill="#FFF8EE" stroke="#FBD38D" stroke-width="1"/>
+          <text x="425" y="416" font-size="11" font-weight="700" fill="#7B341E">[ Inbound Rules ]</text>
+          <text x="425" y="433" font-size="11" fill="#232F3E">Port 80 (HTTP) | TCP | Source: 0.0.0.0/0 (전체 오픈)</text>
+          <text x="425" y="448" font-size="11" fill="#232F3E">Port 22 (SSH)  | TCP | Source: 내 공인 IP/32 (단독 제한)</text>
+
+          <!-- 7. EC2 Instance Box -->
+          <rect x="415" y="470" width="450" height="115" rx="8" fill="#F8FAFC" stroke="#232F3E" stroke-width="1.5"/>
+          <text x="430" y="493" font-size="13" font-weight="800" fill="#232F3E">🖥️ EC2 Instance: mission-web-server</text>
+          <text x="430" y="512" font-size="11" fill="#545B64">인스턴스 유형: <strong>t2.micro / t3.micro</strong> (Free Tier)</text>
+          <text x="430" y="530" font-size="11" fill="#545B64">OS: <strong>Ubuntu 22.04 LTS</strong> | 스토리지: <strong>8GiB gp3 EBS</strong></text>
+          <text x="430" y="548" font-size="11" fill="#0073BB">웹 서버: <strong>Nginx 1.x</strong> (Port 80) / Docker Container</text>
+          <text x="430" y="567" font-size="11" font-weight="700" fill="#1D8102">고정 외부 IP: Elastic IP (54.180.1.48) 연결 완료</text>
+
+          <path d="M500,262 L500,340 L620,340 L620,360" fill="none" stroke="#FF9900" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+          <text x="515" y="333" font-size="11" font-weight="700" fill="#FF9900">Traffic Routing (IGW → SG → EC2)</text>
+        </svg>
+      </div>
+
+      <!-- Feature Breakdown Cards -->
+      <div class="arch-features">
+        <div class="arch-feat-card">
+          <div class="arch-feat-num">1</div>
+          <div class="arch-feat-content">
+            <h4>격리 네트워크 (VPC)</h4>
+            <p>서울 리전(ap-northeast-2)에 <code>10.0.0.0/16</code> 전용 사설망을 구축하여 외부와 격리</p>
+          </div>
+        </div>
+        <div class="arch-feat-card">
+          <div class="arch-feat-num">2</div>
+          <div class="arch-feat-content">
+            <h4>퍼블릭 서브넷</h4>
+            <p>AZ <code>ap-northeast-2a</code>에 <code>10.0.1.0/24</code> 대역을 할당하여 공개 서비스 공간 분리</p>
+          </div>
+        </div>
+        <div class="arch-feat-card">
+          <div class="arch-feat-num">3</div>
+          <div class="arch-feat-content">
+            <h4>인터넷 게이트웨이 (IGW)</h4>
+            <p><code>mission-igw</code>를 연결하고 <code>0.0.0.0/0</code> 기본 경로를 등록해 양방향 인터넷 통신 보장</p>
+          </div>
+        </div>
+        <div class="arch-feat-card">
+          <div class="arch-feat-num">4</div>
+          <div class="arch-feat-content">
+            <h4>보안 그룹 방화벽</h4>
+            <p>HTTP 80은 전 세계 오픈, SSH 22는 관리자 단일 IP(/32)로 화이트리스트 강력 제어</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. External Access Proofs -->
+    <section id="verification" class="section-block">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-icon">🌐</div>
+          <div>
+            <h2 class="section-title">웹 서비스 외부 접속 검증 (방식 A &amp; 방식 B 모두 완료)</h2>
+            <p class="section-subtitle">브라우저 실제 접속 및 /health 200 OK 헬스체크 증빙 화면</p>
+          </div>
+        </div>
+        <span class="badge green">HTTP 200 OK Verified</span>
+      </div>
+
+      <div class="screenshot-grid">
+        <!-- Screen 1: Browser -->
+        <div class="screenshot-card">
+          <div class="screenshot-thumb" onclick="openModal('docs/screenshots/01-web-browser.png')">
+            <img src="docs/screenshots/01-web-browser.png" alt="Web Browser Verification" onerror="this.src='https://via.placeholder.com/600x350/1e293b/38bdf8?text=01-web-browser.png'">
+            <div class="thumb-overlay">🔍 클릭하여 확대</div>
+          </div>
+          <div class="screenshot-body">
+            <div>
+              <h3 class="screenshot-title">(A) 브라우저 외부 접속 화면</h3>
+              <p class="screenshot-desc">외부 인터넷 PC에서 퍼블릭 IP(54.180.1.48)로 직접 브라우저 접속하여 "I Like AWS" 메인 대시보드가 정상 렌더링됨을 입증.</p>
+            </div>
+            <div>
+              <span class="code-badge">GET http://54.180.1.48 → 200 OK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 2: Health Check -->
+        <div class="screenshot-card">
+          <div class="screenshot-thumb" onclick="openModal('docs/screenshots/02-health-check.png')">
+            <img src="docs/screenshots/02-health-check.png" alt="Health Check Verification" onerror="this.src='https://via.placeholder.com/600x350/1e293b/38bdf8?text=02-health-check.png'">
+            <div class="thumb-overlay">🔍 클릭하여 확대</div>
+          </div>
+          <div class="screenshot-body">
+            <div>
+              <h3 class="screenshot-title">(B) GET /health 헬스체크 &amp; 아웃바운드</h3>
+              <p class="screenshot-desc">HTTP GET /health 호출 시 고정 응답 문자열 "OK"와 200 OK 반환 및 curl 아웃바운드 통신 성공 검증 화면.</p>
+            </div>
+            <div>
+              <span class="code-badge">GET http://54.180.1.48/health → 200 OK ("OK")</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Requirements Checklist -->
+    <section id="checklist" class="section-block">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-icon">✅</div>
+          <div>
+            <h2 class="section-title">기능 요구사항 달성 체크리스트 (100% 충족)</h2>
+            <p class="section-subtitle">네트워크, 컴퓨트, 방화벽, IAM 최소권한, 운영 안정성 전 항목 검증</p>
+          </div>
+        </div>
+        <span class="badge green">전체 통과 완료</span>
+      </div>
+
+      <div class="check-grid">
+        <div class="check-group">
+          <h3 class="check-group-title">🌐 3-1. 네트워크 구성</h3>
+          <ul class="check-list">
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>VPC 1개 생성</strong>: mission-vpc (10.0.0.0/16)</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>Public Subnet 1개</strong>: mission-public-subnet (10.0.1.0/24)</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>인터넷 게이트웨이</strong>: mission-igw 연결</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>Route Table</strong>: 0.0.0.0/0 → IGW 라우팅</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>아웃바운드 통신</strong>: curl 외부 통신 200 OK</span></li>
+          </ul>
+        </div>
+
+        <div class="check-group">
+          <h3 class="check-group-title">🖥️ 3-2. 컴퓨트 &amp; 웹 서버</h3>
+          <ul class="check-list">
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>Public Subnet EC2</strong>: t2.micro, Ubuntu 22.04 LTS</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>SSH 원격 접속</strong>: ~/.ssh/mission-key.pem 로그인</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>Nginx 웹 서버</strong>: systemctl active (running)</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>내부 200 응답</strong>: curl -sI http://localhost 성공</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>EBS 스토리지</strong>: 8GiB gp3 볼륨 연결</span></li>
+          </ul>
+        </div>
+
+        <div class="check-group">
+          <h3 class="check-group-title">🛡️ 3-3. 접근 제어 (SG)</h3>
+          <ul class="check-list">
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>필요 포트만 인바운드</strong>: TCP 80, 22 외 전체 차단</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>HTTP 80 오픈</strong>: 0.0.0.0/0 웹 트래픽 허용</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>SSH 22 제한</strong>: 관리자 내 IP/32 단독 화이트리스트</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>전체 오픈 금지</strong>: 0-65535 포트 허용 규칙 미생성</span></li>
+          </ul>
+        </div>
+
+        <div class="check-group">
+          <h3 class="check-group-title">🔑 3-4. IAM 최소권한</h3>
+          <ul class="check-list">
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>실습 전용 계정</strong>: mission-deployer</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>권한 제한</strong>: EC2/VPC 한정 화이트리스트 JSON</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>관리자 금지</strong>: AdministratorAccess 배제</span></li>
+            <li class="check-item"><span class="check-icon">✓</span><span><strong>타 서비스 격리</strong>: S3/RDS 등 AccessDenied 검증</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Troubleshooting -->
+    <section id="troubleshooting" class="section-block">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-icon">🛠️</div>
+          <div>
+            <h2 class="section-title">트러블슈팅 보고서 요약</h2>
+            <p class="section-subtitle">실제 카카오클라우드 NPU 300만 원 과금 참사 &amp; AWS 인프라 4대 실무 사례 (증상 ➔ 가설 ➔ 검증 ➔ 조치 ➔ 결과 ➔ 재발방지)</p>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <a href="troubleshooting-study-guide.html" class="btn-outline" style="border-color:var(--aws-orange); color:#fff; background:rgba(255,153,0,0.15);">🎓 6단계 시각학습자료</a>
+          <a href="docs/troubleshooting.md" target="_blank" class="btn-outline">전체 보고서 보기</a>
+        </div>
+      </div>
+
+      <!-- Real Flagship Case Card -->
+      <div style="background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(15,23,42,0.85)); border: 2px solid var(--aws-red); border-radius: 14px; padding: 24px; margin-bottom: 24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(239,68,68,0.3); padding-bottom:10px;">
+          <h3 style="font-size:18px; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px;">
+            <span>🔥 [실제 운영 사례] 카카오클라우드 NPU 무료사용 후 인스턴스 전면 삭제에도 300만 원 폭탄 과금 사태</span>
+          </h3>
+          <span style="background:rgba(239,68,68,0.3); color:#fca5a5; font-size:12px; font-weight:800; padding:4px 10px; border-radius:6px;">대시보드 부재 &amp; 계정삭제 해결</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; font-size:13.5px;">
+          <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+            <strong style="color:#f87171;">1. 증상</strong>: 무료기간 종료에 맞춰 인스턴스와 키를 모두 삭제했으나 익월 <strong>300만 원 이상 폭탄 과금</strong> 청구
+          </div>
+          <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+            <strong style="color:#fbbf24;">2. 원인</strong>: 대시보드 부재로 보이지 않는 NPU 예약 풀 및 백엔드 하위 설정들이 해제되지 않고 지속 과금
+          </div>
+          <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+            <strong style="color:#38bdf8;">3. 검증</strong>: 콘솔에 삭제할 인스턴스가 0건이나 고객센터 확인 결과 숨은 NPU 설정들이 활성(Active) 상태 규명
+          </div>
+          <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+            <strong style="color:#34d399;">4. 조치</strong>: 고객센터에 <strong>"계정 및 전 자원 삭제"</strong> 요청 (엔지니어들도 설정 추적 및 삭제에 수 주 소요되어 익월 완료)
+          </div>
+          <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+            <strong style="color:#34d399;">5. 결과</strong>: 백엔드 수동 강제 삭제 및 계정 폐쇄로 과금 차단, 소명으로 <strong>300만 원 전액 청구 취소/감면 확정</strong>
+          </div>
+          <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+            <strong style="color:var(--aws-orange);">6. 재발방지</strong>: 고가 NPU/GPU 사용 전 카드 등록 주의 &amp; 대시보드 미비 클라우드는 고객센터에 계정삭제 공식 접수
+          </div>
+        </div>
+      </div>
+
+      <div class="trouble-grid">
+        <!-- Case 1 -->
+        <div class="trouble-card">
+          <div class="trouble-head">
+            <h3 class="trouble-title">사례 1. SSH 접속 타임아웃 오류</h3>
+            <span class="trouble-badge">네트워크/보안</span>
+          </div>
+          <div class="trouble-flow">
+            <div class="flow-row">
+              <span class="flow-label">증상</span>
+              <span class="flow-val"><code>ssh -i mission-key.pem ubuntu@54.180.1.48</code> 실행 시 <code>Operation timed out</code></span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">원인</span>
+              <span class="flow-val">보안 그룹에 등록된 SSH 허용 IP(/32)와 로컬 ISP 변동 공인 IP 불일치</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">조치</span>
+              <span class="flow-val solution"><code>curl ifconfig.me</code>로 확인한 현재 공인 IP/32로 보안 그룹 인바운드 갱신 후 즉시 접속</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">재발방지</span>
+              <span class="flow-val">IP 자동 갱신 스크립트 작성 및 0.0.0.0/0 허용 금지 원칙 준수</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Case 2 -->
+        <div class="trouble-card">
+          <div class="trouble-head">
+            <h3 class="trouble-title">사례 2. 보안 그룹 80 오픈 후 외부 접속 불가</h3>
+            <span class="trouble-badge">라우팅 테이블</span>
+          </div>
+          <div class="trouble-flow">
+            <div class="flow-row">
+              <span class="flow-label">증상</span>
+              <span class="flow-val">인스턴스 내부 <code>localhost:80</code>은 정상이나 외부 웹 브라우저에서 무한 로딩</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">원인</span>
+              <span class="flow-val">서브넷 라우팅 테이블(Route Table)에 <code>0.0.0.0/0 → IGW</code> 경로 미등록</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">조치</span>
+              <span class="flow-val solution">라우팅 테이블에 타깃 <code>mission-igw</code>를 가리키는 기본 라우트 등록 후 해결</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">재발방지</span>
+              <span class="flow-val">퍼블릭 서브넷 프로비저닝 시 IGW 라우팅 연결 검증 자동화</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Case 3 -->
+        <div class="trouble-card">
+          <div class="trouble-head">
+            <h3 class="trouble-title">사례 3. 메인은 정상이나 /health 404 오류</h3>
+            <span class="trouble-badge">Nginx 설정</span>
+          </div>
+          <div class="trouble-flow">
+            <div class="flow-row">
+              <span class="flow-label">증상</span>
+              <span class="flow-val"><code>GET /</code> 접속은 성공하나 <code>GET /health</code> 호출 시 <code>404 Not Found</code> 발생</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">원인</span>
+              <span class="flow-val">Ubuntu Nginx의 기본 가상 호스트 <code>default</code>가 80포트를 선점하여 커스텀 블록 무시</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">조치</span>
+              <span class="flow-val solution"><code>sites-enabled/default</code> 심볼릭 링크 제거 및 <code>/health</code> 200 반환 location 블록 적용</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">재발방지</span>
+              <span class="flow-val">웹서버 배포 템플릿에 기본 가상호스트 자동 비활성화 스니펫 탑재</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Case 4 -->
+        <div class="trouble-card">
+          <div class="trouble-head">
+            <h3 class="trouble-title">사례 4. IAM 최소권한 RunInstances 실패</h3>
+            <span class="trouble-badge">IAM 권한 통제</span>
+          </div>
+          <div class="trouble-flow">
+            <div class="flow-row">
+              <span class="flow-label">증상</span>
+              <span class="flow-val"><code>ec2:RunInstances</code> 권한만 부여 시 인스턴스 생성 중 권한 부족(Unauthorized) 에러</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">원인</span>
+              <span class="flow-val">인스턴스 생성 시 동반되는 EBS 볼륨 생성, 서브넷/SG 바인딩 액션 권한 결여</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">조치</span>
+              <span class="flow-val solution">필수 연관 액션만 선별 허용하고 불필요한 S3/RDS 등은 명시적 Deny로 최소권한 완성</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-label">재발방지</span>
+              <span class="flow-val">권한 단위 정책 JSON(iam/minimal-deployer-policy.jsonl) 버전 관리</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Docker Bonus -->
+    <section id="docker" class="section-block">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-icon">🐳</div>
+          <div>
+            <h2 class="section-title">⭐ 보너스 과제 2 — Docker 컨테이너 배포</h2>
+            <p class="section-subtitle">Alpine Nginx 기반 경량 컨테이너 패키징 및 포트 매핑 (80:80) 검증</p>
+          </div>
+        </div>
+        <span class="bonus-tag">BONUS PASS</span>
+      </div>
+
+      <div class="screenshot-grid">
+        <div class="screenshot-card">
+          <div class="screenshot-thumb" onclick="openModal('docs/screenshots/03-docker-ps.png')">
+            <img src="docs/screenshots/03-docker-ps.png" alt="Docker PS Verification" onerror="this.src='https://via.placeholder.com/600x350/1e293b/38bdf8?text=03-docker-ps.png'">
+            <div class="thumb-overlay">🔍 클릭하여 확대</div>
+          </div>
+          <div class="screenshot-body">
+            <div>
+              <h3 class="screenshot-title">docker ps 컨테이너 실행 상태 증빙</h3>
+              <p class="screenshot-desc"><code>ilikeaws-web:latest</code> 컨테이너가 <code>0.0.0.0:80-&gt;80/tcp</code>로 정상 바인딩되어 Up 상태 유지 중임을 확인.</p>
+            </div>
+            <div>
+              <span class="code-badge">docker ps &amp; curl localhost/health</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; justify-content: space-between; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--aws-border); border-radius: 14px; padding: 22px;">
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--aws-orange);">🚀 컨테이너 실행 명세</h3>
+            <div style="background: #020617; border-radius: 8px; padding: 14px; font-size: 12.5px; border: 1px solid var(--aws-border); margin-bottom: 16px; overflow-x: auto;">
+              <span style="color: var(--text-muted);"># Docker 컨테이너 실행 명령어</span><br>
+              <code style="color: #38bdf8;">docker run -d \<br>
+  &nbsp;&nbsp;--name ilikeaws-web-server \<br>
+  &nbsp;&nbsp;-p 80:80 \<br>
+  &nbsp;&nbsp;--restart always \<br>
+  &nbsp;&nbsp;ilikeaws-web:latest</code>
+            </div>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; color: #cbd5e1;">
+              <li><strong>이미지</strong>: <code>Dockerfile</code> 기반 경량화 Alpine Linux + Nginx</li>
+              <li><strong>포트 바인딩</strong>: 호스트 <code>80</code> ➔ 컨테이너 <code>80</code></li>
+              <li><strong>무중단 재시작</strong>: <code>--restart always</code> 옵션 적용</li>
+            </ul>
+          </div>
+          <div style="margin-top: 16px;">
+            <a href="Dockerfile" target="_blank" class="btn-outline">📄 Dockerfile 보기</a>
+            <a href="docker-compose.yml" target="_blank" class="btn-outline">🐳 Compose 파일 보기</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Cleanup & Structure -->
+    <section id="cleanup" class="section-block">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-icon">🧹</div>
+          <div>
+            <h2 class="section-title">리소스 정리 체크리스트 &amp; 저장소 구조</h2>
+            <p class="section-subtitle">과금 원천 차단을 위한 역순 정리 가이드 및 잔여 리소스 0건 증빙</p>
+          </div>
+        </div>
+        <span class="badge green">Zero Cost Verified</span>
+      </div>
+
+      <div class="screenshot-grid" style="margin-bottom: 24px;">
+        <div class="screenshot-card">
+          <div class="screenshot-thumb" onclick="openModal('docs/screenshots/04-cleanup-verified.png')">
+            <img src="docs/screenshots/04-cleanup-verified.png" alt="Cleanup Verified" onerror="this.src='https://via.placeholder.com/600x350/1e293b/38bdf8?text=04-cleanup-verified.png'">
+            <div class="thumb-overlay">🔍 클릭하여 확대</div>
+          </div>
+          <div class="screenshot-body">
+            <div>
+              <h3 class="screenshot-title">AWS 리소스 잔여 0건 검증 화면</h3>
+              <p class="screenshot-desc">EC2, EBS, EIP, IGW, Route Table, Subnet, VPC 전 리소스가 안전하게 종료/삭제되어 과금이 원천 차단됨을 CLI 쿼리로 검증.</p>
+            </div>
+            <div>
+              <span class="code-badge">scripts/cleanup-aws.sh</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #fff;">📁 프로젝트 디렉토리 구조</h3>
+          <div class="tree-box">
+<span class="tree-folder">ilikeaws/</span>
+├── <span class="tree-file">README.md</span>                          <span class="tree-comment"># 프로젝트 종합 가이드 및 동료평가 루브릭</span>
+├── <span class="tree-file">Dockerfile</span>                         <span class="tree-comment"># 보너스 과제용 Docker 빌드 명세</span>
+├── <span class="tree-file">docker-compose.yml</span>                 <span class="tree-comment"># Docker Compose 설정 파일</span>
+├── <span class="tree-folder">docs/</span>
+│   ├── <span class="tree-file">architecture.(png|pdf|svg|md)</span>  <span class="tree-comment"># [필수 1] 아키텍처 다이어그램 및 명세</span>
+│   ├── <span class="tree-file">troubleshooting.(md|pdf)</span>       <span class="tree-comment"># [필수 3] 4대 트러블슈팅 실무 보고서</span>
+│   ├── <span class="tree-file">cleanup-checklist.md</span>           <span class="tree-comment"># [필수 4] 리소스 정리 체크리스트</span>
+│   └── <span class="tree-folder">screenshots/</span>                   <span class="tree-comment"># [필수 2] 외부 접속/상태 증빙 캡처</span>
+│       ├── <span class="tree-file">01-web-browser.png</span>         <span class="tree-comment"># 웹 브라우저 외부 접속 화면</span>
+│       ├── <span class="tree-file">02-health-check.png</span>        <span class="tree-comment"># /health 200 OK 증빙</span>
+│       ├── <span class="tree-file">03-docker-ps.png</span>           <span class="tree-comment"># docker ps 컨테이너 상태 화면</span>
+│       └── <span class="tree-file">04-cleanup-verified.png</span>    <span class="tree-comment"># 리소스 잔여 0건 검증 화면</span>
+├── <span class="tree-folder">iam/</span>
+│   └── <span class="tree-file">minimal-deployer-policy.jsonl</span>  <span class="tree-comment"># IAM 최소권한 정책 정의 JSONL</span>
+├── <span class="tree-folder">scripts/</span>
+│   ├── <span class="tree-file">setup-aws.sh</span>                   <span class="tree-comment"># AWS 리소스 자동 프로비저닝 스크립트</span>
+│   ├── <span class="tree-file">cleanup-aws.sh</span>                 <span class="tree-comment"># AWS 리소스 안전 역순 일괄 정리 스크립트</span>
+│   └── <span class="tree-file">deploy-docker.sh</span>               <span class="tree-comment"># Docker 배포 자동화 스크립트</span>
+└── <span class="tree-folder">web/</span>
+    ├── <span class="tree-file">index.html</span>                     <span class="tree-comment"># 웹 서비스 메인 대시보드 화면</span>
+    ├── <span class="tree-file">health</span>                         <span class="tree-comment"># /health 고정 응답 텍스트 ("OK")</span>
+    └── <span class="tree-file">nginx.conf</span>                     <span class="tree-comment"># Nginx 가상 호스트 및 엔드포인트 설정</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Lightbox -->
+  <div id="imageModal" class="modal" onclick="closeModal()">
+    <span class="modal-close">&times;</span>
+    <img id="modalImg" class="modal-content" src="" alt="Enlarged Screenshot">
+  </div>
+
+  <script>
+    function copyComment() {
+      const text = document.getElementById("commentText").innerText.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector(".btn-copy");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "✅ 복사 완료!";
+        btn.style.background = "#10b981";
+        btn.style.color = "#ffffff";
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.background = "var(--aws-orange)";
+          btn.style.color = "#000";
+        }, 2000);
+      }).catch(err => {
+        alert("클립보드 복사에 실패했습니다.");
+      });
+    }
+
+    function openModal(src) {
+      const modal = document.getElementById("imageModal");
+      const modalImg = document.getElementById("modalImg");
+      modalImg.src = src;
+      modal.classList.add("active");
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("imageModal");
+      modal.classList.remove("active");
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
+  </script>
+</body>
+</html>

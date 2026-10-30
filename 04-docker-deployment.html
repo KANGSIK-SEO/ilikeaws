@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4. Docker 컨테이너 배포 — Ilikeaws 시각화</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --aws-navy: #0f172a;
+      --aws-card-bg: #1e293b;
+      --aws-border: #334155;
+      --aws-orange: #ff9900;
+      --aws-blue: #38bdf8;
+      --aws-green: #10b981;
+      --aws-cyan: #06b6d4;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --bg-dark: #0b0f19;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+
+    header {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--aws-border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      overflow-x: auto;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .logo-badge {
+      background: var(--aws-orange);
+      color: #000;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .page-nav {
+      display: flex;
+      gap: 8px;
+      list-style: none;
+      flex-shrink: 0;
+    }
+    .page-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .page-nav a:hover, .page-nav a.active {
+      color: #fff;
+      background: rgba(255, 153, 0, 0.15);
+      border: 1px solid rgba(255, 153, 0, 0.35);
+    }
+
+    .page-header { padding: 40px 0 30px; }
+    .badge-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+    }
+    .badge.orange { background: rgba(255, 153, 0, 0.2); color: var(--aws-orange); }
+    .badge.green { background: rgba(16, 185, 129, 0.2); color: var(--aws-green); }
+    .badge.cyan { background: rgba(6, 182, 212, 0.2); color: var(--aws-cyan); }
+    .page-title { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .page-desc { color: var(--text-muted); font-size: 15px; max-width: 900px; }
+
+    .block {
+      background: var(--aws-card-bg);
+      border: 1px solid var(--aws-border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+    .block-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    /* Container Grid */
+    .docker-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 860px) {
+      .docker-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Screenshot Card */
+    .screen-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--aws-border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .screen-thumb {
+      width: 100%;
+      height: 280px;
+      background: #000;
+      position: relative;
+      cursor: zoom-in;
+      overflow: hidden;
+      border-bottom: 1px solid var(--aws-border);
+    }
+    .screen-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .screen-thumb:hover img { transform: scale(1.03); }
+    .screen-body { padding: 20px; flex: 1; }
+    .screen-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .screen-desc { font-size: 13px; color: var(--text-muted); }
+
+    /* Code Card */
+    .code-box {
+      background: #020617;
+      border: 1px solid var(--aws-border);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13px;
+      color: #cbd5e1;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    /* Spec Pill Grid */
+    .pill-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .pill-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--aws-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+    .pill-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .pill-val { font-size: 14px; font-weight: 700; color: #fff; }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .modal-close {
+      position: absolute;
+      top: 24px;
+      right: 32px;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav-inner">
+      <a href="README.html" class="logo-area">
+        <span class="logo-badge">AWS</span>
+        <span>Ilikeaws Docs</span>
+      </a>
+      <ul class="page-nav">
+        <li><a href="README.html">🏠 전체 허브</a></li>
+        <li><a href="01-architecture.html">1. 아키텍처</a></li>
+        <li><a href="02-external-access.html">2. 접속 검증</a></li>
+        <li><a href="03-requirements-checklist.html">3. 요구사항</a></li>
+        <li><a href="04-docker-deployment.html" class="active">4. Docker 배포</a></li>
+        <li><a href="05-troubleshooting.html">5. 트러블슈팅</a></li>
+        <li><a href="06-cleanup-checklist.html">6. 자원 정리</a></li>
+        <li><a href="07-directory-structure.html">7. 저장소 구조</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-header">
+      <div class="badge-bar">
+        <span class="badge orange">SECTION 4</span>
+        <span class="badge cyan">⭐ BONUS PASS</span>
+        <span class="badge">Alpine Nginx &amp; Compose</span>
+      </div>
+      <h1 class="page-title">4. ⭐ 보너스 과제 2 — Docker 컨테이너로 배포</h1>
+      <p class="page-desc">
+        호스트 OS에 종속되지 않는 일관된 실행 환경을 보장하기 위해, 경량 Alpine Nginx 기반 Docker 이미지를 빌드하고 포트 바인딩(80:80) 및 자동 재시작 정책을 적용하여 컨테이너 웹 서비스를 배포했습니다.
+      </p>
+    </section>
+
+    <!-- Visual Showcase -->
+    <div class="block">
+      <h2 class="block-title">🐳 컨테이너 가동 증빙 및 스펙</h2>
+      <div class="docker-grid">
+        <!-- Screenshot -->
+        <div class="screen-card">
+          <div class="screen-thumb" onclick="openModal('docs/screenshots/03-docker-ps.png')">
+            <img src="docs/screenshots/03-docker-ps.png" alt="docker ps screenshot">
+            <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 6px; font-size: 11px; color:#fff;">🔍 원본 확대</div>
+          </div>
+          <div class="screen-body">
+            <h3 class="screen-title">docker ps 가동 상태 증빙</h3>
+            <p class="screen-desc">
+              <code>ilikeaws-web:latest</code> 컨테이너가 <code>0.0.0.0:80-&gt;80/tcp</code>로 정상 포워딩되어 <code>Up (healthy)</code> 상태로 유지 중임을 터미널 명령어로 입증합니다.
+            </p>
+          </div>
+        </div>
+
+        <!-- Terminal Command Runner -->
+        <div style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div class="code-box">
+            <span style="color: #64748b;"># 1. Docker 이미지 빌드</span><br>
+            <span style="color: var(--aws-blue);">$ docker build -t ilikeaws-web:latest .</span><br><br>
+            <span style="color: #64748b;"># 2. 백그라운드 무중단 컨테이너 실행</span><br>
+            <span style="color: var(--aws-blue);">$ docker run -d \<br>
+  &nbsp;&nbsp;--name ilikeaws-web-server \<br>
+  &nbsp;&nbsp;-p 80:80 \<br>
+  &nbsp;&nbsp;--restart always \<br>
+  &nbsp;&nbsp;ilikeaws-web:latest</span><br><br>
+            <span style="color: #64748b;"># 3. 컨테이너 헬스체크 검증</span><br>
+            <span style="color: var(--aws-blue);">$ curl -i http://localhost/health</span><br>
+            <span style="color: #34d399;">HTTP/1.1 200 OK<br>OK</span>
+          </div>
+
+          <div class="pill-grid">
+            <div class="pill-card">
+              <div class="pill-label">베이스 이미지</div>
+              <div class="pill-val">nginx:alpine (초경량)</div>
+            </div>
+            <div class="pill-card">
+              <div class="pill-label">포트 매핑</div>
+              <div class="pill-val">Host 80 ➔ Container 80</div>
+            </div>
+            <div class="pill-card">
+              <div class="pill-label">재시작 정책</div>
+              <div class="pill-val">restart: always</div>
+            </div>
+            <div class="pill-card">
+              <div class="pill-label">빌드 자동화</div>
+              <div class="pill-val">docker-compose.yml 완비</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code Specs -->
+    <div class="block">
+      <h2 class="block-title">📄 Dockerfile &amp; Compose 구성 명세</h2>
+      <div class="docker-grid">
+        <div>
+          <h4 style="color: var(--aws-orange); margin-bottom: 8px;">Dockerfile 명세</h4>
+          <div class="code-box">
+<pre>FROM nginx:alpine
+
+# 웹 정적 파일 및 헬스체크 파일 복사
+COPY web/index.html /usr/share/nginx/html/index.html
+COPY web/health /usr/share/nginx/html/health
+
+# Nginx 커스텀 라우팅 설정 파일 복사
+COPY web/nginx.conf /etc/nginx/conf.d/default.conf
+
+# 웹 포트 노출 및 데몬 포그라운드 실행
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]</pre>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="color: var(--aws-blue); margin-bottom: 8px;">docker-compose.yml 명세</h4>
+          <div class="code-box">
+<pre>services:
+  web:
+    build: .
+    image: ilikeaws-web:latest
+    container_name: ilikeaws-web-server
+    restart: always
+    ports:
+      - "80:80"</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="imageModal" class="modal" onclick="closeModal()">
+    <span class="modal-close">&times;</span>
+    <img id="modalImg" class="modal-content" src="" alt="Enlarged Image">
+  </div>
+
+  <script>
+    function openModal(src) {
+      document.getElementById("modalImg").src = src;
+      document.getElementById("imageModal").classList.add("active");
+    }
+    function closeModal() {
+      document.getElementById("imageModal").classList.remove("active");
+    }
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+  </script>
+</body>
+</html>

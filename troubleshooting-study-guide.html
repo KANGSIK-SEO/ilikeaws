@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS 클라우드 트러블슈팅 4대 실무 사례 시각 학습자료</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: #151e2e;
+      --card-border: #243247;
+      --aws-orange: #ff9900;
+      --aws-blue: #38bdf8;
+      --aws-green: #10b981;
+      --aws-red: #ef4444;
+      --aws-purple: #a855f7;
+      --aws-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 90px;
+    }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    header {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      overflow-x: auto;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, var(--aws-orange), #ea580c);
+      color: #000;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      list-style: none;
+      flex-shrink: 0;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: #fff;
+      background: rgba(255, 153, 0, 0.15);
+      border: 1px solid rgba(255, 153, 0, 0.35);
+    }
+
+    /* Hero */
+    .hero-banner {
+      padding: 44px 0 30px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      margin-bottom: 32px;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+    .tag.orange { background: rgba(255, 153, 0, 0.15); color: var(--aws-orange); border: 1px solid rgba(255, 153, 0, 0.3); }
+    .tag.blue { background: rgba(56, 189, 248, 0.15); color: var(--aws-blue); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .tag.green { background: rgba(16, 185, 129, 0.15); color: var(--aws-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .hero-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.8px;
+      margin-bottom: 12px;
+      line-height: 1.3;
+      background: linear-gradient(135deg, #ffffff 50%, #cbd5e1 80%, var(--aws-orange) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 950px;
+      line-height: 1.7;
+    }
+
+    /* 6-Step Visual Pipeline Tracker */
+    .pipeline-wrapper {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .pipeline-header {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--aws-orange);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pipeline-flow {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 880px) {
+      .pipeline-flow { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    }
+    @media (max-width: 540px) {
+      .pipeline-flow { grid-template-columns: 1fr; }
+    }
+    .pipe-step {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .pipe-step:hover {
+      transform: translateY(-2px);
+      border-color: var(--aws-blue);
+    }
+    .pipe-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .s1 { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #f87171; }
+    .s2 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #fbbf24; }
+    .s3 { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+    .s4 { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #c084fc; }
+    .s5 { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #34d399; }
+    .s6 { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #60a5fa; }
+
+    .pipe-name { font-size: 13.5px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+    .pipe-sub { font-size: 11px; color: var(--text-muted); }
+
+    /* Case Selector Tabs */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .tab-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 13.5px;
+      font-weight: 700;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      border-color: rgba(255, 153, 0, 0.4);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(255, 153, 0, 0.18), rgba(234, 88, 12, 0.1));
+      border-color: var(--aws-orange);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(255, 153, 0, 0.2);
+    }
+
+    /* Case Card Content */
+    .case-container {
+      display: none;
+    }
+    .case-container.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .case-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 32px;
+      margin-bottom: 28px;
+    }
+    .case-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .case-badge-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .case-id-badge {
+      font-size: 12px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--aws-orange);
+      color: #000;
+    }
+    .case-heading {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .domain-tag {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--aws-blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    /* 6 Steps Grid */
+    .step-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .step-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px 22px;
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 20px;
+      align-items: flex-start;
+      transition: border-color 0.2s;
+    }
+    .step-box:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    @media (max-width: 680px) {
+      .step-box { grid-template-columns: 1fr; gap: 8px; }
+    }
+    .step-label-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-icon-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-text-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .step-content-cell {
+      font-size: 14px;
+      color: #cbd5e1;
+      line-height: 1.65;
+    }
+
+    /* Terminal Code Callout */
+    .terminal-snippet {
+      background: #020617;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #e2e8f0;
+      margin-top: 10px;
+      position: relative;
+    }
+    .term-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 11px;
+      color: #64748b;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 6px;
+    }
+    .copy-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #cbd5e1;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .copy-btn:hover { background: var(--aws-orange); color: #000; }
+
+    /* Learning Insights Callouts */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 740px) {
+      .insights-grid { grid-template-columns: 1fr; }
+    }
+    .insight-card {
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .insight-card.takeaway {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .insight-card.pitfall {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .insight-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .insight-card.takeaway .insight-title { color: #34d399; }
+    .insight-card.pitfall .insight-title { color: #f87171; }
+    .insight-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    /* 4-in-1 Full Matrix Table */
+    .matrix-block {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 28px;
+      margin-top: 36px;
+    }
+    .matrix-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .matrix-sub {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .matrix-table th {
+      background: rgba(15, 23, 42, 0.85);
+      padding: 14px 12px;
+      font-weight: 800;
+      color: #cbd5e1;
+      text-align: left;
+      border-bottom: 2px solid var(--card-border);
+      white-space: nowrap;
+    }
+    .matrix-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      vertical-align: top;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .matrix-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .m-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .mb-1 { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .mb-2 { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .mb-3 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .mb-4 { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+
+    /* Interactive Quiz */
+    .quiz-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+      border: 1px dashed var(--aws-orange);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 32px;
+    }
+    .quiz-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--aws-orange);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .quiz-q {
+      font-size: 14px;
+      color: #f1f5f9;
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+    .quiz-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: #38bdf8;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quiz-btn:hover {
+      background: var(--aws-orange);
+      color: #000;
+    }
+    .quiz-answer {
+      display: none;
+      margin-top: 14px;
+      padding: 14px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      font-size: 13px;
+      color: #34d399;
+    }
+    .quiz-answer.show { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-inner">
+      <a href="README.html" class="logo-area">
+        <span class="logo-badge">STUDY GUIDE</span>
+        <span>AWS 트러블슈팅 6단계 시각학습자료</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="README.html">🏠 전체 허브</a></li>
+        <li><a href="01-architecture.html">1. 아키텍처</a></li>
+        <li><a href="02-external-access.html">2. 접속 검증</a></li>
+        <li><a href="05-troubleshooting.html">5. 트러블슈팅 요약</a></li>
+        <li><a href="#matrix">📊 6단계 종합 매트릭스</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-tags">
+        <span class="tag orange">AWS CLOUD TROUBLESHOOTING</span>
+        <span class="tag green">6-STEP ROOT CAUSE ANALYSIS</span>
+        <span class="tag blue">4 REAL-WORLD PRODUCTION CASES</span>
+      </div>
+      <h1 class="hero-title">4대 실무 사례 트러블슈팅 시각 학습자료<br>[ 증상 ➔ 가설 ➔ 검증 ➔ 조치 ➔ 결과 ➔ 재발방지 ]</h1>
+      <p class="hero-desc">
+        클라우드 인프라 구축 및 운영 시 직면하는 대표적인 문제 4가지(SSH 원격 차단, IGW 기본 라우트 누락, Nginx 가상호스트 충돌, IAM 최소권한 거부)를 
+        <strong>엔지니어링 표준 6단계 프레임워크</strong>로 구조화하여, 원인 규명부터 항구적 재발 방지책까지 직관적으로 체득할 수 있도록 구성한 심화 학습 자료입니다.
+      </p>
+    </section>
+
+    <!-- 6-Step Visual Pipeline Tracker -->
+    <div class="pipeline-wrapper">
+      <div class="pipeline-header">
+        <span>🔄 트러블슈팅 엔지니어링 6단계 표준 라이프사이클</span>
+      </div>
+      <div class="pipeline-flow">
+        <div class="pipe-step">
+          <div class="pipe-num s1">1</div>
+          <div class="pipe-name">증상 식별</div>
+          <div class="pipe-sub">Symptom</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num s2">2</div>
+          <div class="pipe-name">가설 수립</div>
+          <div class="pipe-sub">Hypothesis</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num s3">3</div>
+          <div class="pipe-name">원인 검증</div>
+          <div class="pipe-sub">Verification</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num s4">4</div>
+          <div class="pipe-name">긴급 조치</div>
+          <div class="pipe-sub">Action</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num s5">5</div>
+          <div class="pipe-name">결과 확인</div>
+          <div class="pipe-sub">Result</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num s6">6</div>
+          <div class="pipe-name">재발 방지</div>
+          <div class="pipe-sub">Prevention</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case Navigation Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchCase('case0')">
+        <span>🔥 [실제 운영 사례] 카카오클라우드 NPU 300만 원 과금 &amp; 계정 삭제</span>
+      </button>
+      <button class="tab-btn" onclick="switchCase('case1')">
+        <span>🚨 사례 1. SSH 타임아웃 &amp; IP 격리</span>
+      </button>
+      <button class="tab-btn" onclick="switchCase('case2')">
+        <span>🌐 사례 2. IGW 기본 라우트 누락</span>
+      </button>
+      <button class="tab-btn" onclick="switchCase('case3')">
+        <span>⚙️ 사례 3. Nginx default 충돌</span>
+      </button>
+      <button class="tab-btn" onclick="switchCase('case4')">
+        <span>🔑 사례 4. IAM 최소권한 RunInstances</span>
+      </button>
+    </div>
+
+    <!-- ==================== CASE 0 (REAL WORLD CASE) ==================== -->
+    <div id="case0" class="case-container active">
+      <div class="case-card" style="border: 2px solid var(--aws-red); background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(15, 23, 42, 0.9));">
+        <div class="case-meta">
+          <div class="case-badge-title">
+            <span class="case-id-badge" style="background:#ef4444; color:#fff;">FLAGSHIP CASE</span>
+            <h2 class="case-heading">카카오클라우드 NPU 무료사용 후 인스턴스 전면 삭제에도 300만 원 폭탄 과금 사태</h2>
+          </div>
+          <span class="domain-tag" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">클라우드 자원 가시성 결여 &amp; 계정 삭제 트러블슈팅</span>
+        </div>
+
+        <div class="step-grid">
+          <!-- Step 1 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s1">1</span>
+              <span class="step-text-title" style="color:#f87171;">증상 (Symptom)</span>
+            </div>
+            <div class="step-content-cell">
+              카카오클라우드 NPU 가속기 인스턴스를 무료 프로모션 기간 동안 사용한 후, 프로모션 종료 시점에 맞춰 콘솔에 접속하여 <strong>모든 인스턴스와 발급된 접속 키(키페어)를 완전히 삭제</strong>함.<br>
+              그러나 익월 청구서 확인 시, 인스턴스가 전혀 없음에도 불구하고 <strong>300만 원 이상의 대규모 폭탄 과금</strong>이 등록된 신용카드로 청구되거나 발행되는 치명적 과금 사태 발생.
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s2">2</span>
+              <span class="step-text-title" style="color:#fbbf24;">가설 (Hypothesis)</span>
+            </div>
+            <div class="step-content-cell">
+              사용자가 UI 화면에서 '인스턴스'와 '키'만 지웠을 뿐, NPU 전용 하위 할당 자원(가속기 예약 풀, 백엔드 파티션, 전용 스토리지 볼륨)이 해제되지 않고 백그라운드에서 시간당 비용으로 지속 과금되고 있을 것이다.<br>
+              특히 카카오클라우드는 <strong>통합 자원 과금 대시보드가 부재</strong>하고 보이지 않는 숨은 설정들이 많아, 사용자가 콘솔 화면에서 잔여 자원을 인지하거나 수동으로 찾아 지우는 것이 구조적으로 불가능했을 것이다.
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s3">3</span>
+              <span class="step-text-title" style="color:#38bdf8;">검증 (Verification)</span>
+            </div>
+            <div class="step-content-cell">
+              1. 콘솔 UI 점검: 인스턴스 및 키페어 목록은 이미 0건으로 비어있어, 사용자가 수동으로 삭제할 항목을 UI에서 전혀 찾을 수 없음.<br>
+              2. 고객센터 긴급 소명 문의: 청구 내역 대조 결과, 인스턴스는 삭제되었으나 <strong>콘솔 UI에 노출되지 않는 NPU 백엔드 할당 설정 및 예약 리소스들이 여전히 활성화(Active) 상태</strong>로 남아 시간당 과금을 유발하고 있었음이 공식 검증됨.
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s4">4</span>
+              <span class="step-text-title" style="color:#c084fc;">조치 (Action)</span>
+            </div>
+            <div class="step-content-cell">
+              <strong style="color: #34d399; font-size:15px;">[핵심 트러블슈팅 해법]</strong><br>
+              사용자가 개별 설정을 콘솔에서 찾아 지우려 애쓰는 방식은 불가능하다고 판단하고, <strong>고객센터에 공식 긴급 요청으로 "계정 탈퇴 및 계정에 귀속된 모든 NPU 구독과 하위 설정 전면 강제 삭제(Total Account Decommissioning)"를 요청함</strong>.<br><br>
+              ⚠️ <em>충격적인 실무 현실: 카카오클라우드 기술지원팀 및 운영진 자체도 통합 대시보드가 없고 보이지 않는 설정들이 복잡하게 얽혀 있어, <strong>그들이 고객의 모든 잔여 설정을 수동으로 추적하여 완전히 삭제하는 데만 수 주가 소요</strong>되었으며, 다음 달이 되어서야 모든 삭제 처리가 완료됨.</em>
+            </div>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s5">5</span>
+              <span class="step-text-title" style="color:#34d399;">결과 (Result)</span>
+            </div>
+            <div class="step-content-cell">
+              카카오클라우드 최고위 기술지원팀의 백엔드 수동 삭제 및 계정 완전 폐쇄가 완료되어 비정상 과금 파이프라인이 원천 차단됨.<br>
+              사용자가 무료체험 종료 시점에 인스턴스를 정상 삭제했던 로그와 콘솔 대시보드 가시성 부재를 입증하여, <strong>300만 원 이상의 부당 청구액 전액 청구 취소 및 감면 조치 확정</strong>.
+            </div>
+          </div>
+
+          <!-- Step 6 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s6">6</span>
+              <span class="step-text-title" style="color:#60a5fa;">재발 방지 (Prevention)</span>
+            </div>
+            <div class="step-content-cell">
+              <strong>1. 신용카드 사전 등록 절대 주의</strong>: NPU/GPU 고가 자원 무료 프로모션 이용 전 한도가 무제한인 신용카드를 무분별하게 등록하지 말고, 잔액이 제한된 체크카드나 가상 결제수단을 활용하거나 사용 직후 결제수단을 삭제/정지함.<br>
+              <strong>2. 대시보드 부재 클라우드 이용 원칙</strong>: 통합 모니터링 대시보드가 없는 클라우드는 단순 콘솔 인스턴스 삭제를 맹신하지 말고, <strong>무료 기간 종료 전 반드시 고객센터에 '계정 삭제 및 전 자원 완전 삭제 요청'을 공식 접수하여 잔여 0건 확약을 받는 프로세스</strong>를 준수함.
+            </div>
+          </div>
+        </div>
+
+        <div class="insights-grid">
+          <div class="insight-card takeaway">
+            <div class="insight-title">💡 핵심 엔지니어링 교훈 (Key Takeaway)</div>
+            <p class="insight-desc">
+              "보이지 않는 리소스가 가장 무서운 과금의 주범이다." 인스턴스를 지워도 하위 예약 풀이 살아남는 고가 NPU/GPU 자원은, 대시보드가 없다면 <strong>고객센터를 통한 계정 전면 삭제 요청</strong>만이 유일하고 확실한 해결책입니다.
+            </p>
+          </div>
+          <div class="insight-card pitfall">
+            <div class="insight-title">⚠️ 흔히 하는 치명적 실수 (Common Pitfall)</div>
+            <p class="insight-desc">
+              "화면에서 인스턴스를 지웠으니 요금이 안 나오겠지"라고 방심하고 방치하는 것입니다. 클라우드는 백엔드에 얽힌 종속 자원이 남아있으면 매시간 과금 폭탄을 투하합니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CASE 1 ==================== -->
+    <div id="case1" class="case-container">
+      <div class="case-card">
+        <div class="case-meta">
+          <div class="case-badge-title">
+            <span class="case-id-badge">CASE 01</span>
+            <h2 class="case-heading">SSH 22번 포트 접속 타임아웃 및 /32 단일 공인 IP 격리</h2>
+          </div>
+          <span class="domain-tag">L3/L4 Stateful Firewall (Security Group)</span>
+        </div>
+
+        <div class="step-grid">
+          <!-- Step 1 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s1">1</span>
+              <span class="step-text-title">증상 (Symptom)</span>
+            </div>
+            <div class="step-content-cell">
+              관리자 터미널에서 EC2 원격 접속 시도 시 응답이 멈추며 1~2분 후 <strong><code>Operation timed out</code></strong> 오류가 발생하고 접속이 강제 종료됨.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>Terminal Error</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd1')">복사</button>
+                </div>
+                <code id="cmd1">$ ssh -i ~/.ssh/mission-key.pem ubuntu@54.180.1.48<br>ssh: connect to host 54.180.1.48 port 22: Operation timed out</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s2">2</span>
+              <span class="step-text-title">가설 (Hypothesis)</span>
+            </div>
+            <div class="step-content-cell">
+              가정/카페 ISP 통신사의 유동 IP 할당 특성으로 인해 관리자 로컬 PC의 공인 IP가 변경되었으나, AWS 보안 그룹(<code>mission-web-sg</code>) 인바운드 규칙에는 <strong>과거 공인 IP(/32)</strong>가 등록되어 있어 신규 IP 패킷이 방화벽에서 Drop되고 있을 것이다.
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s3">3</span>
+              <span class="step-text-title">검증 (Verification)</span>
+            </div>
+            <div class="step-content-cell">
+              외부 IP 조회 서비스(<code>ipify</code>)로 확인한 현재 공인 IP와 AWS CLI로 조회한 보안 그룹 인바운드 IP 대역을 교차 대조함.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>AWS CLI Inspection</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd2')">복사</button>
+                </div>
+                <code id="cmd2"># 1. 현재 관리자 공인 IP 확인<br>$ curl -s https://api.ipify.org<br>121.135.181.35<br><br># 2. 보안 그룹에 등록된 허용 IP 확인<br>$ aws ec2 describe-security-groups --group-names mission-web-sg \<br>    --query 'SecurityGroups[0].IpPermissions[?ToPort==`22`].IpRanges[0].CidrIp' --output text<br>211.234.56.78/32  &lt;-- 불일치 확인 (원인 확정!)</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s4">4</span>
+              <span class="step-text-title">조치 (Action)</span>
+            </div>
+            <div class="step-content-cell">
+              기존 만료된 규칙을 즉시 회수(Revoke)하고, 확인된 현재 단일 공인 IP(<code>/32</code>)를 새롭게 인가(Authorize)함.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>Remediation CLI</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd3')">복사</button>
+                </div>
+                <code id="cmd3"># 1. 기존 규칙 회수<br>$ aws ec2 revoke-security-group-ingress --group-id sg-0a1b2c3d4e5f6g7h8 \<br>    --protocol tcp --port 22 --cidr 211.234.56.78/32<br><br># 2. 현재 공인 IP(/32) 단독 허용 등록<br>$ MY_IP="$(curl -s https://api.ipify.org)/32"<br>$ aws ec2 authorize-security-group-ingress --group-id sg-0a1b2c3d4e5f6g7h8 \<br>    --protocol tcp --port 22 --cidr "$MY_IP"</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s5">5</span>
+              <span class="step-text-title">결과 (Result)</span>
+            </div>
+            <div class="step-content-cell">
+              규칙 갱신 즉시 <code>ssh -i mission-key.pem ubuntu@54.180.1.48</code> 실행 시 0.5초 이내에 정상 로그인 프롬프트 <code>ubuntu@ip-10-0-1-X:~$</code> 획득 성공. 비인가 IP는 원천 Drop 유지.
+            </div>
+          </div>
+
+          <!-- Step 6 -->
+          <div class="step-box">
+            <div class="step-label-cell">
+              <span class="step-icon-badge s6">6</span>
+              <span class="step-text-title">재발 방지 (Prevention)</span>
+            </div>
+            <div class="step-content-cell">
+              1. <code>scripts/setup-aws.sh</code>에 배포 시점 공인 IP 자동 감지 주입 로직을 내장함.<br>
+              2. 편의를 위해 22번 포트를 전 세계(<code>0.0.0.0/0</code>)로 여는 행위를 보안 감사 규정으로 엄격히 금지함.
+            </div>
+          </div>
+        </div>
+
+        <!-- Learning Insights -->
+        <div class="insights-grid">
+          <div class="insight-card takeaway">
+            <div class="insight-title">💡 핵심 학습 포인트 (Key Takeaway)</div>
+            <p class="insight-desc">
+              보안 그룹(Security Group)은 <strong>상태 저장(Stateful)</strong> 방화벽이므로, 인바운드 룰이 맞지 않으면 아웃바운드 허용 여부와 무관하게 SYN 패킷 단계에서 Silent Drop(타임아웃) 처리됩니다.
+            </p>
+          </div>
+          <div class="insight-card pitfall">
+            <div class="insight-title">⚠️ 흔히 하는 실수 (Common Pitfall)</div>
+            <p class="insight-desc">
+              SSH가 안 된다고 무심코 <code>0.0.0.0/0</code>으로 열어버리면, 수 분 만에 전 세계 봇넷(Botnet)의 무차별 대입(Brute-force) 타깃이 되어 서버가 즉시 장악될 수 있습니다. 반드시 <code>/32</code> 단일 IP를 고수해야 합니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CASE 2 ==================== -->
+    <div id="case2" class="case-container">
+      <div class="case-card">
+        <div class="case-meta">
+          <div class="case-badge-title">
+            <span class="case-id-badge">CASE 02</span>
+            <h2 class="case-heading">보안 그룹 80 오픈 후 외부 웹 접속 불가 (IGW 기본 라우트 누락)</h2>
+          </div>
+          <span class="domain-tag">VPC Networking &amp; Route Table</span>
+        </div>
+
+        <div class="step-grid">
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s1">1</span><span class="step-text-title">증상 (Symptom)</span></div>
+            <div class="step-content-cell">
+              EC2 내부에서 <code>curl -I http://localhost</code>는 200 OK를 반환하며 Nginx가 정상 실행 중이나, 외부 브라우저에서 <code>http://54.180.1.48</code> 접속 시 무한 로딩 후 <code>ERR_CONNECTION_TIMED_OUT</code> 발생.
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s2">2</span><span class="step-text-title">가설 (Hypothesis)</span></div>
+            <div class="step-content-cell">
+              보안 그룹 인바운드 규칙에는 Port 80이 <code>0.0.0.0/0</code>으로 열려 있으나, 서브넷 라우팅 테이블(Route Table)에 인터넷 게이트웨이(<code>mission-igw</code>)로 향하는 기본 라우트(<code>0.0.0.0/0</code>)가 누락되어 패킷 왕복이 차단되었을 것이다.
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s3">3</span><span class="step-text-title">검증 (Verification)</span></div>
+            <div class="step-content-cell">
+              서브넷에 연결된 라우팅 테이블 경로를 조회하여 기본 인터넷 라우트 존재 여부를 검사함.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>Route Table Inspection</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd4')">복사</button>
+                </div>
+                <code id="cmd4">$ aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=subnet-0123456789abcdef0" \<br>    --query 'RouteTables[0].Routes' --output json<br>[<br>  { "DestinationCidrBlock": "10.0.0.0/16", "GatewayId": "local", "State": "active" }<br>] &lt;-- 0.0.0.0/0 ➔ mission-igw 라우트가 없음! (원인 확정)</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s4">4</span><span class="step-text-title">조치 (Action)</span></div>
+            <div class="step-content-cell">
+              라우팅 테이블에 외부 인터넷 전체(<code>0.0.0.0/0</code>)를 인터넷 게이트웨이(<code>mission-igw</code>)로 전달하는 라우트 엔트리를 추가함.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>Add Default Route</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd5')">복사</button>
+                </div>
+                <code id="cmd5">$ aws ec2 create-route --route-table-id rtb-0123456789abcdef0 \<br>    --destination-cidr-block 0.0.0.0/0 \<br>    --gateway-id igw-0123456789abcdef0<br>{ "Return": true }</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s5">5</span><span class="step-text-title">결과 (Result)</span></div>
+            <div class="step-content-cell">
+              명령 실행 즉시 외부 브라우저 새로고침 시 "I Like AWS" 메인 대시보드가 정상 출력되며, <code>curl -sI http://54.180.1.48</code> ➔ <code>HTTP/1.1 200 OK</code> 정상 반환 확인.
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s6">6</span><span class="step-text-title">재발 방지 (Prevention)</span></div>
+            <div class="step-content-cell">
+              퍼블릭 서브넷 프로비저닝 스크립트 작성 시 <strong>[VPC 생성 ➔ IGW 생성 및 Attach ➔ 라우팅 테이블 0.0.0.0/0 등록 ➔ 서브넷 연결]</strong>을 원자적(Atomic) 트랜잭션으로 구성하여 단계 누락을 방지함.
+            </div>
+          </div>
+        </div>
+
+        <div class="insights-grid">
+          <div class="insight-card takeaway">
+            <div class="insight-title">💡 핵심 학습 포인트 (Key Takeaway)</div>
+            <p class="insight-desc">
+              VPC에서 인스턴스가 공인 IP를 가지고 있더라도, 서브넷 라우팅 테이블에 <code>0.0.0.0/0 ➔ IGW</code> 경로가 없으면 외부 통신이 불가능한 "가짜 퍼블릭 서브넷" 상태가 됩니다.
+            </p>
+          </div>
+          <div class="insight-card pitfall">
+            <div class="insight-title">⚠️ 흔히 하는 실수 (Common Pitfall)</div>
+            <p class="insight-desc">
+              보안 그룹만 오픈하고 웹 접속이 안 된다며 Nginx 재시작을 반복하는 실수가 흔합니다. 외부 연결 문제는 항상 <strong>SG(방화벽) + Route Table(경로)</strong> 두 축을 함께 점검해야 합니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CASE 3 ==================== -->
+    <div id="case3" class="case-container">
+      <div class="case-card">
+        <div class="case-meta">
+          <div class="case-badge-title">
+            <span class="case-id-badge">CASE 03</span>
+            <h2 class="case-heading">메인 웹은 정상이나 /health에서 404 Not Found (Nginx default 충돌)</h2>
+          </div>
+          <span class="domain-tag">L7 Application Layer (Nginx Virtual Host)</span>
+        </div>
+
+        <div class="step-grid">
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s1">1</span><span class="step-text-title">증상 (Symptom)</span></div>
+            <div class="step-content-cell">
+              브라우저에서 <code>http://54.180.1.48/</code> 접속 시 메인 웹페이지는 잘 열리지만, 로드밸런서용 헬스체크 <code>http://54.180.1.48/health</code> 호출 시 <code>404 Not Found</code>가 발생함.
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s2">2</span><span class="step-text-title">가설 (Hypothesis)</span></div>
+            <div class="step-content-cell">
+              Ubuntu apt로 Nginx 설치 시 자동 활성화되는 기본 가상 호스트(<code>/etc/nginx/sites-enabled/default</code>)가 포트 80의 기본 서버(<code>default_server</code>)로 우선 등록되어, 사용자가 추가한 커스텀 location 블록이 무시되고 있을 것이다.
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s3">3</span><span class="step-text-title">검증 (Verification)</span></div>
+            <div class="step-content-cell">
+              <code>sudo nginx -T</code>로 가상 호스트 우선순위와 실제 참조 root 디렉토리를 덤프 분석함.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>Nginx Configuration Dump</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd6')">복사</button>
+                </div>
+                <code id="cmd6">$ sudo nginx -T | grep -E "(server_name|listen|root)"<br># /etc/nginx/sites-enabled/default:<br>listen 80 default_server;<br>root /var/www/html;  &lt;-- 여기에 health 파일이 없음!<br><br># /etc/nginx/conf.d/web.conf:<br>listen 80; &lt;-- default_server에 밀려 404 발생 확인!</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s4">4</span><span class="step-text-title">조치 (Action)</span></div>
+            <div class="step-content-cell">
+              기본 default 사이트 심볼릭 링크를 제거하고, 명시적인 <code>/health</code> 고정 응답 location 블록을 구성한 뒤 Nginx를 리로드함.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>Fix Nginx Configuration</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd7')">복사</button>
+                </div>
+                <code id="cmd7"># 1. 기본 default 가상 호스트 비활성화<br>$ sudo rm -f /etc/nginx/sites-enabled/default<br><br># 2. 커스텀 location 블록 반영 (/etc/nginx/conf.d/web.conf)<br>location /health {<br>    default_type text/plain;<br>    return 200 'OK\n';<br>}<br><br># 3. 문법 검사 및 무중단 리로드<br>$ sudo nginx -t &amp;&amp; sudo systemctl reload nginx</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s5">5</span><span class="step-text-title">결과 (Result)</span></div>
+            <div class="step-content-cell">
+              <code>curl -i http://localhost/health</code> 실행 시 <code>HTTP/1.1 200 OK</code> 응답 및 페이로드 <code>"OK"</code> 정상 수신. 브라우저에서도 즉시 "OK" 텍스트 렌더링 확인.
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s6">6</span><span class="step-text-title">재발 방지 (Prevention)</span></div>
+            <div class="step-content-cell">
+              배포 자동화 스크립트(<code>scripts/setup-aws.sh</code>)에 Nginx 설치 직후 <code>sites-enabled/default</code> 파일을 선제 삭제하는 루틴을 표준화함.
+            </div>
+          </div>
+        </div>
+
+        <div class="insights-grid">
+          <div class="insight-card takeaway">
+            <div class="insight-title">💡 핵심 학습 포인트 (Key Takeaway)</div>
+            <p class="insight-desc">
+              Nginx에서 <code>default_server</code> 지시자는 매칭되는 호스트명이 없을 때 모든 트래픽을 가로채는 포트 점유자 역할을 하므로, 신규 가상호스트 구축 시 기본 설정을 반드시 정리해야 합니다.
+            </p>
+          </div>
+          <div class="insight-card pitfall">
+            <div class="insight-title">⚠️ 흔히 하는 실수 (Common Pitfall)</div>
+            <p class="insight-desc">
+              설정 파일만 편집하고 <code>systemctl reload nginx</code>를 누락하거나, <code>nginx -t</code> 사전 검증 없이 재시작하여 웹 서비스 전체가 다운(Active: failed)되는 사고를 주의해야 합니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CASE 4 ==================== -->
+    <div id="case4" class="case-container">
+      <div class="case-card">
+        <div class="case-meta">
+          <div class="case-badge-title">
+            <span class="case-id-badge">CASE 04</span>
+            <h2 class="case-heading">IAM 최소권한 RunInstances 권한 부족 및 피보팅(횡적 침투) 차단</h2>
+          </div>
+          <span class="domain-tag">Cloud Security Governance (IAM Least Privilege)</span>
+        </div>
+
+        <div class="step-grid">
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s1">1</span><span class="step-text-title">증상 (Symptom)</span></div>
+            <div class="step-content-cell">
+              실습 전용 배포 사용자(<code>mission-deployer</code>)로 CLI 명령을 통해 인스턴스 생성을 시도할 때 <strong><code>UnauthorizedOperation</code></strong> 권한 오류가 발생하며 생성이 중단됨.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>IAM Permission Error</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd8')">복사</button>
+                </div>
+                <code id="cmd8">$ aws ec2 run-instances --image-id ami-0462a9141...<br>An error occurred (UnauthorizedOperation) when calling the RunInstances operation:<br>You are not authorized to perform this operation.</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s2">2</span><span class="step-text-title">가설 (Hypothesis)</span></div>
+            <div class="step-content-cell">
+              IAM 정책에 <code>ec2:RunInstances</code> 액션만 등록되어 있고, EC2 생성 시 백그라운드에서 동반 호출되는 부속 리소스(EBS 볼륨 생성 <code>ec2:CreateVolume</code>, 서브넷 참조, 태그 생성 <code>ec2:CreateTags</code>) API 권한이 누락되었을 것이다.
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s3">3</span><span class="step-text-title">검증 (Verification)</span></div>
+            <div class="step-content-cell">
+              AWS STS 디코딩 명령어로 거부된 메시지를 디코딩하여 정확히 어떤 부속 API 액션이 Deny되었는지 파악함.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>Decode Authorization Message</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd9')">복사</button>
+                </div>
+                <code id="cmd9"># 디코딩 결과 확인<br>"action": "ec2:CreateVolume", "resource": "arn:aws:ec2:ap-northeast-2:...:volume/*"<br>➔ EBS 볼륨 생성 API 권한이 빠져있음을 정확히 진단!</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s4">4</span><span class="step-text-title">조치 (Action)</span></div>
+            <div class="step-content-cell">
+              편하다고 <code>AdministratorAccess</code>를 주는 대신, <code>iam/minimal-deployer-policy.jsonl</code> 정책에 필수 연관 EC2/VPC API만 정밀 추가하고, 무관한 S3, RDS, DynamoDB, IAM 권한은 명시적 Deny(Explicit Deny)로 완벽 격리함.
+              <div class="terminal-snippet">
+                <div class="term-head">
+                  <span>Minimal Policy JSON Structure</span>
+                  <button class="copy-btn" onclick="copySnippet('cmd10')">복사</button>
+                </div>
+                <code id="cmd10">"Statement": [<br>  { "Effect": "Allow", "Action": ["ec2:RunInstances", "ec2:CreateVolume", "ec2:CreateTags", ...] },<br>  { "Effect": "Deny", "Action": ["s3:*", "rds:*", "dynamodb:*", "iam:*"], "Resource": "*" }<br>]</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s5">5</span><span class="step-text-title">결과 (Result)</span></div>
+            <div class="step-content-cell">
+              정책 갱신 후 <code>aws ec2 run-instances</code> 정상 성공(인스턴스 생성 완료). 동시에 웹서버에서 탈취된 키로 <code>aws s3 ls</code> 시도 시 <code>AccessDenied</code>로 즉각 차단되어 <strong>피보팅(횡적 침투) 공격 원천 방어</strong> 성공.
+            </div>
+          </div>
+
+          <div class="step-box">
+            <div class="step-label-cell"><span class="step-icon-badge s6">6</span><span class="step-text-title">재발 방지 (Prevention)</span></div>
+            <div class="step-content-cell">
+              "배포가 안 된다고 관리자 권한(Admin)을 주는 행위"를 금지하고, 정책 정의 파일을 Git으로 형상 관리하여 최소 권한(Least Privilege) 원칙을 상시 준수함.
+            </div>
+          </div>
+        </div>
+
+        <div class="insights-grid">
+          <div class="insight-card takeaway">
+            <div class="insight-title">💡 핵심 학습 포인트 (Key Takeaway)</div>
+            <p class="insight-desc">
+              EC2 인스턴스는 단독으로 생성되지 않으며 반드시 EBS 볼륨, 서브넷, 보안 그룹, 태그 등의 리소스와 결합됩니다. 따라서 최소 권한 설계 시 연관 리소스 액션을 반드시 패키지로 선별 허용해야 합니다.
+            </p>
+          </div>
+          <div class="insight-card pitfall">
+            <div class="insight-title">⚠️ 흔히 하는 실수 (Common Pitfall)</div>
+            <p class="insight-desc">
+              권한 에러를 만났을 때 귀찮아서 <code>AdministratorAccess</code>를 부여하는 습관은 사내 데이터 유출 및 수천만 원대 비트코인 채굴 악용 사고의 제1 원인입니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 4x6 Matrix Table ==================== -->
+    <section id="matrix" class="matrix-block">
+      <h2 class="matrix-title">📊 4대 실무 사례 6단계 종합 분석 매트릭스 (Full Summary)</h2>
+      <p class="matrix-sub">한눈에 비교하는 4개 장애 유형별 증상, 원인, 조치 및 재발방지 대책 총괄표</p>
+
+      <div style="overflow-x: auto;">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th style="width: 14%;">사례 / 영역</th>
+              <th style="width: 15%;">1. 증상</th>
+              <th style="width: 17%;">2. 가설 및 원인</th>
+              <th style="width: 18%;">3. 검증 방법</th>
+              <th style="width: 18%;">4. 조치 내용</th>
+              <th style="width: 18%;">6. 재발 방지책</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444;">
+              <td>
+                <span class="m-badge" style="background:#ef4444; color:#fff;">실제 핵심 사례</span><br>
+                <strong>카카오클라우드 NPU<br>300만 원 과금 사태</strong><br>
+                <small style="color:var(--text-muted)">자원 가시성 결여</small>
+              </td>
+              <td>NPU 인스턴스/키 전면 삭제 후에도 <strong>300만 원 이상 폭탄 과금</strong> 청구</td>
+              <td>대시보드 부재로 보이지 않는 백엔드 NPU 예약 풀/하위 설정 잔류 지속 과금</td>
+              <td>콘솔 UI에 삭제 대상 전무 확인 ➔ 고객센터 청구 내역 대조 결과 숨은 활성 자원 규명</td>
+              <td><span style="color:#34d399; font-weight:700;">고객센터에 "계정 및 전 자원 삭제" 요청 (엔지니어도 정리 수 주 소요)</span></td>
+              <td>NPU/GPU 사용 전 카드 등록 주의 &amp; 대시보드 미비 시 고객센터 계정삭제 공식 접수</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="m-badge mb-1">사례 1</span><br>
+                <strong>SSH 타임아웃</strong><br>
+                <small style="color:var(--text-muted)">보안 그룹 L4</small>
+              </td>
+              <td>SSH 접속 시 <code>Operation timed out</code></td>
+              <td>ISP 동적 공인 IP 변경으로 SG 허용 IP(/32) 불일치</td>
+              <td><code>ipify</code> 현재 공인 IP와 SG CidrIp 교차 검사</td>
+              <td><span style="color:#34d399; font-weight:700;">현재 IP(/32)로 단일 호스트 인바운드 룰 갱신</span></td>
+              <td>자동 IP 감지 스크립트 작성 및 0.0.0.0/0 절대 금지</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="m-badge mb-2">사례 2</span><br>
+                <strong>외부 웹 접속 불가</strong><br>
+                <small style="color:var(--text-muted)">VPC 라우팅</small>
+              </td>
+              <td>인스턴스 내부는 정상이나 외부 브라우저 타임아웃</td>
+              <td>서브넷 라우팅 테이블에 <code>0.0.0.0/0 ➔ IGW</code> 누락</td>
+              <td><code>describe-route-tables</code> 쿼리로 기본 라우트 결여 확인</td>
+              <td><span style="color:#34d399; font-weight:700;">라우팅 테이블에 0.0.0.0/0 ➔ mission-igw 등록</span></td>
+              <td>서브넷 생성 시 IGW 라우트 바인딩 원자적 자동화</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="m-badge mb-3">사례 3</span><br>
+                <strong>/health 404 에러</strong><br>
+                <small style="color:var(--text-muted)">Nginx L7 서버</small>
+              </td>
+              <td>메인(/)은 뜨지만 /health에서 404 반환</td>
+              <td>OS 기본 가상호스트(default)가 80포트 default_server 선점</td>
+              <td><code>nginx -T</code> 덤프로 server_name 및 root 경로 충돌 확인</td>
+              <td><span style="color:#34d399; font-weight:700;">default 파일 제거 및 /health 전용 location 블록 적용</span></td>
+              <td>웹 서버 프로비저닝 시 기본 템플릿 선제 삭제 규격화</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="m-badge mb-4">사례 4</span><br>
+                <strong>RunInstances 실패</strong><br>
+                <small style="color:var(--text-muted)">IAM 최소권한</small>
+              </td>
+              <td>인스턴스 생성 시 <code>UnauthorizedOperation</code></td>
+              <td>EBS 볼륨 생성, 서브넷, 태그 부속 API 액션 누락</td>
+              <td><code>decode-authorization-message</code>로 누락 액션 적발</td>
+              <td><span style="color:#34d399; font-weight:700;">필수 EC2/VPC 화이트리스트 + 무관 서비스 Deny 격리</span></td>
+              <td>Admin 권한 남용 금지 및 최소권한 JSON 버전 관리</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Interactive Self-Check Quiz -->
+    <div class="quiz-card">
+      <div class="quiz-title">🧠 자가 점검 퀴즈 (Self-Check Quiz)</div>
+      <div class="quiz-q">
+        Q. 웹 서버 인스턴스에 탄력적 IP(EIP)를 할당하고 보안 그룹에서 80번 포트를 0.0.0.0/0으로 개방했음에도 불구하고, 외부 인터넷에서 웹 접속이 되지 않고 타임아웃이 발생할 때 가장 먼저 의심해야 할 네트워크 컴포넌트는 무엇일까요?
+      </div>
+      <button class="quiz-btn" onclick="toggleAnswer()">정답 및 해설 확인</button>
+      <div id="quizAns" class="quiz-answer">
+        <strong>정답: 서브넷의 라우팅 테이블(Route Table)에 등록된 0.0.0.0/0 ➔ Internet Gateway(IGW) 기본 라우트 누락!</strong><br><br>
+        보안 그룹(방화벽)이 열려 있어도 라우팅 테이블에 인터넷 관문(IGW)을 가리키는 경로가 설정되어 있지 않으면 패킷이 서브넷 밖으로 나가지 못합니다. (트러블슈팅 사례 2번 참조)
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function switchCase(caseId) {
+      document.querySelectorAll('.case-container').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(caseId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    function copySnippet(id) {
+      const code = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert("명령어가 클립보드에 복사되었습니다!");
+      });
+    }
+
+    function toggleAnswer() {
+      const el = document.getElementById("quizAns");
+      el.classList.toggle("show");
+    }
+  </script>
+</body>
+</html>

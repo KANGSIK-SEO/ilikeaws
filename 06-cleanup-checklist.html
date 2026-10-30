@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>6. 리소스 정리 및 과금 방지 — Ilikeaws 시각화</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --aws-navy: #0f172a;
+      --aws-card-bg: #1e293b;
+      --aws-border: #334155;
+      --aws-orange: #ff9900;
+      --aws-blue: #38bdf8;
+      --aws-green: #10b981;
+      --aws-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --bg-dark: #0b0f19;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+
+    header {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--aws-border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      overflow-x: auto;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .logo-badge {
+      background: var(--aws-orange);
+      color: #000;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .page-nav {
+      display: flex;
+      gap: 8px;
+      list-style: none;
+      flex-shrink: 0;
+    }
+    .page-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .page-nav a:hover, .page-nav a.active {
+      color: #fff;
+      background: rgba(255, 153, 0, 0.15);
+      border: 1px solid rgba(255, 153, 0, 0.35);
+    }
+
+    .page-header { padding: 40px 0 30px; }
+    .badge-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+    }
+    .badge.orange { background: rgba(255, 153, 0, 0.2); color: var(--aws-orange); }
+    .badge.green { background: rgba(16, 185, 129, 0.2); color: var(--aws-green); }
+    .page-title { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .page-desc { color: var(--text-muted); font-size: 15px; max-width: 900px; }
+
+    .block {
+      background: var(--aws-card-bg);
+      border: 1px solid var(--aws-border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+    .block-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    /* Danger Warning Cards */
+    .hazard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .hazard-card {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .hazard-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #f87171;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hazard-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    /* Reverse Teardown Steps */
+    .teardown-chain {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin: 16px 0 24px;
+    }
+    .td-node {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--aws-border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .td-arrow {
+      color: var(--aws-orange);
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    /* Table */
+    .clean-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .clean-table th {
+      background: rgba(15, 23, 42, 0.6);
+      text-align: left;
+      padding: 12px 14px;
+      font-weight: 700;
+      color: #cbd5e1;
+      border-bottom: 2px solid var(--aws-border);
+    }
+    .clean-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .tag-done {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Split Grid */
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 860px) {
+      .split-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Screenshot */
+    .img-box {
+      width: 100%;
+      height: 280px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: zoom-in;
+      position: relative;
+      border: 1px solid var(--aws-border);
+    }
+    .img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .img-box:hover img { transform: scale(1.03); }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .modal-close {
+      position: absolute;
+      top: 24px;
+      right: 32px;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav-inner">
+      <a href="README.html" class="logo-area">
+        <span class="logo-badge">AWS</span>
+        <span>Ilikeaws Docs</span>
+      </a>
+      <ul class="page-nav">
+        <li><a href="README.html">🏠 전체 허브</a></li>
+        <li><a href="01-architecture.html">1. 아키텍처</a></li>
+        <li><a href="02-external-access.html">2. 접속 검증</a></li>
+        <li><a href="03-requirements-checklist.html">3. 요구사항</a></li>
+        <li><a href="04-docker-deployment.html">4. Docker 배포</a></li>
+        <li><a href="05-troubleshooting.html">5. 트러블슈팅</a></li>
+        <li><a href="06-cleanup-checklist.html" class="active">6. 자원 정리</a></li>
+        <li><a href="07-directory-structure.html">7. 저장소 구조</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-header">
+      <div class="badge-bar">
+        <span class="badge orange">SECTION 6</span>
+        <span class="badge green">PASS (100점)</span>
+        <span class="badge">잔여 자원 0건 / 과금 원천 차단</span>
+      </div>
+      <h1 class="page-title">6. 리소스 정리 체크리스트 및 과금 방지 검증</h1>
+      <p class="page-desc">
+        인프라 실습 종료 후 예상치 못한 클라우드 비용 청구를 100% 방지하기 위해, 리소스 간 의존성을 고려한 올바른 <strong>역순 해제(Reverse Teardown)</strong>를 수행하고 잔여 자원 0건을 검증했습니다.
+      </p>
+    </section>
+
+    <!-- 3 Major Cost Hazards -->
+    <div class="block">
+      <h2 class="block-title">⚠️ 클라우드 3대 과금 위험 요인 및 방지 원리</h2>
+      <div class="hazard-grid">
+        <div class="hazard-card">
+          <div class="hazard-title">1. 유휴(Idle) Elastic IP 과금</div>
+          <p class="hazard-desc">인스턴스가 꺼지거나 종료된 후 방치된 탄력적 IP는 <strong>시간당 $0.005의 미사용 패널티 비용</strong>이 발생합니다. 종료 즉시 Release 해야 합니다.</p>
+        </div>
+        <div class="hazard-card">
+          <div class="hazard-title">2. 영구 보존 EBS 볼륨 과금</div>
+          <p class="hazard-desc">인스턴스를 단순 '중지(Stopped)' 상태로 두면 연결된 EBS 볼륨(GB-month)은 계속 과금됩니다. '종료(Terminate)' 시 볼륨을 동시 삭제해야 합니다.</p>
+        </div>
+        <div class="hazard-card">
+          <div class="hazard-title">3. 의존성 충돌 (DependencyViolation)</div>
+          <p class="hazard-desc">VPC나 보안 그룹을 먼저 지우려 하면 하위 리소스가 종속되어 삭제가 거부되므로, 반드시 하위 계층부터 차례대로 역순 정리해야 합니다.</p>
+        </div>
+      </div>
+
+      <!-- Teardown Pipeline -->
+      <h3 style="font-size: 15px; color: #fff; margin-bottom: 8px;">🔄 의존성 역순 정리 파이프라인 (Reverse Teardown Sequence)</h3>
+      <div class="teardown-chain">
+        <div class="td-node">1. EC2 인스턴스 종료</div>
+        <div class="td-arrow">➔</div>
+        <div class="td-node">2. Elastic IP 릴리스</div>
+        <div class="td-arrow">➔</div>
+        <div class="td-node">3. 보안 그룹 삭제</div>
+        <div class="td-arrow">➔</div>
+        <div class="td-node">4. 서브넷 삭제</div>
+        <div class="td-arrow">➔</div>
+        <div class="td-node">5. IGW 분리 및 삭제</div>
+        <div class="td-arrow">➔</div>
+        <div class="td-node">6. VPC 완전 삭제</div>
+      </div>
+    </div>
+
+    <!-- Verification Proofs & Script -->
+    <div class="block">
+      <h2 class="block-title">🧹 정리 검증 화면 및 10대 체크리스트</h2>
+      <div class="split-grid">
+        <div>
+          <div class="img-box" onclick="openModal('docs/screenshots/04-cleanup-verified.png')">
+            <img src="docs/screenshots/04-cleanup-verified.png" alt="Cleanup Verified">
+            <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 6px; font-size: 11px; color:#fff;">🔍 원본 확대</div>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 10px;">
+            CLI 쿼리(<code>aws ec2 describe-instances</code> 등) 실행 결과 모든 실습 리소스가 <code>terminated</code> 및 <code>0건</code>으로 완전 소멸되어 청구 비용 $0 상태임을 확인했습니다.
+          </p>
+        </div>
+
+        <div>
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th>점검 항목</th>
+                <th>리소스 식별자</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1. EC2 인스턴스</td><td>mission-web-server</td><td><span class="tag-done">종료 완료</span></td></tr>
+              <tr><td>2. EBS 볼륨</td><td>8GiB gp3 (available 0건)</td><td><span class="tag-done">삭제 완료</span></td></tr>
+              <tr><td>3. Elastic IP</td><td>mission-eip (54.180.1.48)</td><td><span class="tag-done">릴리스 완료</span></td></tr>
+              <tr><td>4. 보안 그룹</td><td>mission-web-sg</td><td><span class="tag-done">삭제 완료</span></td></tr>
+              <tr><td>5. 라우팅 테이블</td><td>mission-rtb</td><td><span class="tag-done">삭제 완료</span></td></tr>
+              <tr><td>6. 서브넷</td><td>mission-public-subnet</td><td><span class="tag-done">삭제 완료</span></td></tr>
+              <tr><td>7. Internet Gateway</td><td>mission-igw</td><td><span class="tag-done">삭제 완료</span></td></tr>
+              <tr><td>8. VPC 네트워크</td><td>mission-vpc</td><td><span class="tag-done">삭제 완료</span></td></tr>
+              <tr><td>9. IAM 배포 정책</td><td>mission-deployer</td><td><span class="tag-done">비활성화 완료</span></td></tr>
+              <tr><td>10. 과금 대시보드</td><td>AWS Billing Console</td><td><span class="tag-done">$0 청구 확인</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="imageModal" class="modal" onclick="closeModal()">
+    <span class="modal-close">&times;</span>
+    <img id="modalImg" class="modal-content" src="" alt="Enlarged Image">
+  </div>
+
+  <script>
+    function openModal(src) {
+      document.getElementById("modalImg").src = src;
+      document.getElementById("imageModal").classList.add("active");
+    }
+    function closeModal() {
+      document.getElementById("imageModal").classList.remove("active");
+    }
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+  </script>
+</body>
+</html>

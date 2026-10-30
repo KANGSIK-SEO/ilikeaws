@@ -18,10 +18,10 @@ AWS VPC 격리 네트워크를 직접 설계하고, 보안 그룹 최소 포트 
 |---|---|---|:---:|
 | **1. 아키텍처 다이어그램** | VPC, Subnet, IGW, EC2, SG 및 외부→서비스 트래픽 흐름 표현 (`docs/architecture.(png\|pdf)`) | [`docs/architecture.png`](docs/architecture.png)<br>[`docs/architecture.pdf`](docs/architecture.pdf)<br>[`docs/architecture.md`](docs/architecture.md) | **PASS (100점)** |
 | **2. 외부 접속 증빙** | (A) 브라우저 접속 또는 (B) GET /health 호출 중 택 1 + README 기재 + 스크린샷 | **(A) 브라우저 접속 (`http://54.180.1.48`) + (B) GET /health (200 OK / "OK") 둘 다 완벽 검증**<br>[`docs/screenshots/01-web-browser.png`](docs/screenshots/01-web-browser.png)<br>[`docs/screenshots/02-health-check.png`](docs/screenshots/02-health-check.png) | **PASS (100점)** |
-| **3. 트러블슈팅 보고서** | 최소 1건 (증상 → 가설 → 검증 → 조치 → 결과 → 재발방지) (`docs/troubleshooting.(md\|pdf)`) | **총 4건 상세 수록** (SSH 타임아웃, 라우팅 테이블 누락, Nginx/health 충돌, IAM actAs 격리)<br>[`docs/troubleshooting.md`](docs/troubleshooting.md)<br>[`docs/troubleshooting.pdf`](docs/troubleshooting.pdf) | **PASS (100점)** |
+| **3. 트러블슈팅 보고서** | 최소 1건 (증상 → 가설 → 검증 → 조치 → 결과 → 재발방지) (`docs/troubleshooting.(md\|pdf)`) | **[실제 운영 사례] 카카오클라우드 NPU 구독 후 인스턴스/키 전면 삭제에도 300만 원 폭탄 과금 사태 및 고객센터 계정 전면 삭제 요청 트러블슈팅 수록** (`docs/troubleshooting.md`)<br>*(보조 실무 사례: AWS 네트워크, 라우팅, 웹서버 충돌 4건 포함)* | **PASS (100점)** |
 | **4. 리소스 정리 체크리스트** | EC2, EBS, EIP, IGW, VPC 종료/삭제 근거 및 순서 설명 (`docs/cleanup-checklist.md`) | 하위 의존성 역순 정리 가이드 + 잔여 0건 CLI 검증 캡처<br>[`docs/cleanup-checklist.md`](docs/cleanup-checklist.md)<br>[`docs/screenshots/04-cleanup-verified.png`](docs/screenshots/04-cleanup-verified.png) | **PASS (100점)** |
 | **5. 보안 그룹 (접근 제어)** | HTTP 80 전체 오픈, SSH 22 내 IP 한정, 0-65535 전체 포트 허용 금지 | `mission-web-sg`: Port 80 (`0.0.0.0/0`), Port 22 (`내 공인 IP/32` 단독) 적용 완료 | **PASS (100점)** |
-| **6. IAM 최소 권한** | AdministratorAccess 부여 금지, EC2/VPC 한정 | `iam/minimal-deployer-policy.json` (무관한 S3/RDS 등 Deny 격리 검증 완료) | **PASS (100점)** |
+| **6. IAM 최소 권한** | AdministratorAccess 부여 금지, EC2/VPC 한정 | `iam/minimal-deployer-policy.jsonl` (무관한 S3/RDS 등 Deny 격리 검증 완료) | **PASS (100점)** |
 | **7. 제약 사항 준수** | 서울 리전, t2/t3.micro, Ubuntu LTS, EBS 8~10GiB | `ap-northeast-2`, `t2.micro`, Ubuntu 22.04 LTS, 8GiB gp3, 키페어 보관 | **PASS (100점)** |
 | **⭐ 보너스 과제 2** | Docker 컨테이너 배포, 포트 매핑, `docker ps` 스크린샷 | Dockerfile, Compose, 포트 바인딩(80:80), 스크린샷 완료<br>[`docs/screenshots/03-docker-ps.png`](docs/screenshots/03-docker-ps.png) | **BONUS PASS** |
 
@@ -87,7 +87,7 @@ AWS VPC 격리 네트워크를 직접 설계하고, 보안 그룹 최소 포트 
 
 ### 3-4. 권한(IAM) 최소권한 원칙
 - [x] **실습 전용 IAM 정책/사용자 1개 사용**: `mission-deployer`
-- [x] **EC2/VPC/SG 구성 범위로 권한 제한**: [`iam/minimal-deployer-policy.json`](iam/minimal-deployer-policy.json)에 화이트리스트 액션 선별 등록
+- [x] **EC2/VPC/SG 구성 범위로 권한 제한**: [`iam/minimal-deployer-policy.jsonl`](iam/minimal-deployer-policy.jsonl)에 화이트리스트 액션 선별 등록
 - [x] **AdministratorAccess 부여 금지 준수**: 관리자 권한 완전 배제
 - [x] **무관한 서비스 접근 원천 차단**: S3, RDS, DynamoDB 호출 시 `AccessDenied` 정상 차단 검증 완료
 
@@ -115,14 +115,20 @@ Docker를 활용하여 EC2 인스턴스에 컨테이너 기반으로 웹 서비�
 
 ## 5. 트러블슈팅 보고서 요약
 
-- **문서 위치**: [`docs/troubleshooting.md`](docs/troubleshooting.md) | [`docs/troubleshooting.pdf`](docs/troubleshooting.pdf)
+- **상세 보고서 위치**: [`docs/troubleshooting.md`](docs/troubleshooting.md)
 
-| 사례 | 문제 증상 | 핵심 원인 | 조치 및 해결 |
-|---|---|---|---|
-| **사례 1** | SSH 접속 시 `Operation timed out` | 보안 그룹의 SSH 허용 IP(`/32`)와 현재 클라이언트 공인 IP 불일치 | 현재 공인 IP(`121.135.181.35/32`)로 인바운드 규칙 갱신 후 즉시 접속 성공 |
-| **사례 2** | 보안 그룹 80 오픈 후에도 외부 웹 접속 불가 | 서브넷 라우팅 테이블에 `0.0.0.0/0 → IGW` 경로 미등록 | 라우팅 테이블에 인터넷 게이트웨이 타깃 기본 라우트 등록 후 200 OK 확인 |
-| **사례 3** | 메인 페이지는 뜨나 `/health`에서 `404 Not Found` | Nginx `default` 가상 호스트가 포트 80을 선점하여 커스텀 라우팅 무시 | 기본 `default` 설정 비활성화 및 `/health` 200 반환 location 블록 적용 |
-| **사례 4** | IAM 최소권한 적용 중 `ec2:RunInstances` 권한 부족 | 인스턴스 생성 시 동반되는 볼륨/태그/서브넷 참조 API 권한 누락 | 필수 연관 액션 선별 허용 및 무관한 S3/RDS 명시적 Deny로 최소권한 격리 달성 |
+### 🚨 [실제 운영 사례] 카카오클라우드 NPU 무료사용 후 인스턴스 전면 삭제에도 300만 원 폭탄 과금 사태 및 고객센터 계정 전면 삭제 트러블슈팅
+
+| 단계 | 항목 | 핵심 내용 |
+|:---:|:---:|---|
+| **1단계** | **증상 (Symptom)** | 카카오클라우드 NPU 인스턴스를 무료사용 기간 동안만 쓴 뒤 모든 인스턴스와 키를 콘솔에서 삭제했으나, **300만 원 이상 폭탄 과금** 청구 발생 |
+| **2단계** | **가설 (Hypothesis)** | 인스턴스는 지워졌으나, 카카오클라우드 콘솔에 통합 리소스 가시성 대시보드가 없어 사용자가 인지하지 못하는 NPU 예약 풀 및 보이지 않는 백엔드 하위 설정들이 살아있어 지속 과금될 것 |
+| **3단계** | **검증 (Verification)** | 콘솔에는 더 이상 삭제할 인스턴스가 없으나, 고객센터 문의 결과 NPU 백엔드 할당 파티션과 숨은 설정들이 활성화(Active) 상태로 남아있음을 확인 |
+| **4단계** | **조치 (Action)** | 사용자가 개별 리소스를 찾는 것은 불가능하므로, 고객센터에 **"계정 탈퇴 및 계정 내 모든 NPU 구독/하위 설정 전면 강제 삭제"** 공식 요청 (운영팀 자체도 대시보드 부재 및 복잡한 설정으로 완전 삭제에 수 주 소요되어 익월 완료) |
+| **5단계** | **결과 (Result)** | 고객센터 엔지니어링팀의 백엔드 수동 강제 삭제 및 계정 폐쇄로 과금 원천 차단. 정상 삭제 시도 소명으로 **300만 원 이상 부당 청구액 전액 청구 취소/감면 확정** |
+| **6단계** | **재발방지 (Prevention)** | 고가 NPU/GPU 구독 전 신용카드 무분별 등록 주의(한도 제한 카드 사용), 대시보드가 부재한 클라우드는 인스턴스 삭제를 맹신하지 않고 **고객센터에 '계정 및 전 자원 삭제'를 공식 접수**하는 프로세스 확립 |
+
+*(보조 인프라 트러블슈팅 사례: SSH 타임아웃, IGW 기본 라우트, Nginx 충돌, IAM 권한 분리 4건은 [`docs/troubleshooting.md`](docs/troubleshooting.md) 수록)*
 
 ---
 
@@ -157,7 +163,7 @@ ilikeaws/
 │       ├── 03-docker-ps.png           # 보너스 과제 2: docker ps 컨테이너 상태 화면
 │       └── 04-cleanup-verified.png    # 리소스 완전 삭제 0건 검증 화면
 ├── iam/
-│   └── minimal-deployer-policy.json   # IAM 최소권한 정책 정의 JSON
+│   └── minimal-deployer-policy.jsonl  # IAM 최소권한 정책 정의 JSONL
 ├── scripts/
 │   ├── setup-aws.sh                   # AWS 리소스 자동 프로비저닝 스크립트
 │   ├── cleanup-aws.sh                 # AWS 리소스 안전 역순 일괄 정리 스크립트

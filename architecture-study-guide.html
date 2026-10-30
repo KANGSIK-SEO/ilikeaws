@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS 아키텍처 다이어그램 &amp; 트래픽 흐름 시각 학습자료</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: #151e2e;
+      --card-border: #243247;
+      --aws-orange: #ff9900;
+      --aws-blue: #38bdf8;
+      --aws-green: #10b981;
+      --aws-red: #ef4444;
+      --aws-purple: #a855f7;
+      --aws-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 90px;
+    }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+
+    /* Header Nav */
+    header {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      overflow-x: auto;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, var(--aws-orange), #ea580c);
+      color: #000;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      list-style: none;
+      flex-shrink: 0;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: #fff;
+      background: rgba(255, 153, 0, 0.15);
+      border: 1px solid rgba(255, 153, 0, 0.35);
+    }
+
+    /* Hero */
+    .hero-banner {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      margin-bottom: 30px;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+    .tag.orange { background: rgba(255, 153, 0, 0.15); color: var(--aws-orange); border: 1px solid rgba(255, 153, 0, 0.3); }
+    .tag.blue { background: rgba(56, 189, 248, 0.15); color: var(--aws-blue); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .tag.green { background: rgba(16, 185, 129, 0.15); color: var(--aws-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .hero-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.8px;
+      margin-bottom: 12px;
+      line-height: 1.3;
+      background: linear-gradient(135deg, #ffffff 50%, #cbd5e1 80%, var(--aws-orange) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 950px;
+      line-height: 1.7;
+    }
+
+    /* Section Block */
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .sec-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sec-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: rgba(255, 153, 0, 0.15);
+      border: 1px solid rgba(255, 153, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .sec-title {
+      font-size: 21px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .sec-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Diagram Viewer Area */
+    .diagram-view-box {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.15);
+      text-align: center;
+      overflow-x: auto;
+    }
+    .diagram-view-box svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .diagram-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-orange { background: var(--aws-orange); color: #000; }
+    .btn-orange:hover { background: #ffad33; transform: translateY(-1px); }
+    .btn-outline { background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: #cbd5e1; }
+    .btn-outline:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    /* 5 Core Components Grid */
+    .comp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+      margin-top: 20px;
+    }
+    .comp-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 22px;
+      transition: transform 0.2s, border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .comp-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--aws-orange);
+    }
+    .comp-top {
+      margin-bottom: 12px;
+    }
+    .comp-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .comp-num-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 153, 0, 0.15);
+      color: var(--aws-orange);
+      border: 1px solid rgba(255, 153, 0, 0.3);
+    }
+    .comp-type {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .comp-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .comp-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+    .comp-spec {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(51, 65, 85, 0.6);
+      font-size: 12px;
+      color: var(--aws-blue);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Traffic Pipeline 7 Steps */
+    .traffic-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .traffic-step {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 80px 180px 1fr;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.2s;
+    }
+    @media (max-width: 768px) {
+      .traffic-step { grid-template-columns: 70px 1fr; gap: 10px; }
+      .traffic-step > div:nth-child(2) { grid-column: span 2; }
+    }
+    .traffic-step:hover {
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(15, 23, 42, 0.85);
+    }
+    .step-pill {
+      font-size: 11.5px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .sp-in { background: rgba(56, 189, 248, 0.2); color: var(--aws-blue); border: 1px solid rgba(56, 189, 248, 0.4); }
+    .sp-sg { background: rgba(245, 158, 11, 0.2); color: var(--aws-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .sp-srv { background: rgba(16, 185, 129, 0.2); color: var(--aws-green); border: 1px solid rgba(16, 185, 129, 0.4); }
+    .sp-ret { background: rgba(168, 85, 247, 0.2); color: var(--aws-purple); border: 1px solid rgba(168, 85, 247, 0.4); }
+
+    .step-node {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .step-detail {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    /* Outbound Card */
+    .outbound-box {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.7));
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 20px;
+    }
+    .outbound-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--aws-green);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .outbound-flow-chain {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }
+    .chain-node {
+      background: #020617;
+      border: 1px solid var(--card-border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .chain-arrow {
+      color: var(--aws-green);
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    /* SG vs IAM Table */
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      margin-top: 14px;
+    }
+    .matrix-table th {
+      background: rgba(15, 23, 42, 0.85);
+      padding: 12px 14px;
+      font-weight: 800;
+      color: #cbd5e1;
+      text-align: left;
+      border-bottom: 2px solid var(--card-border);
+    }
+    .matrix-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .matrix-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+    /* Interactive Quiz */
+    .quiz-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px dashed var(--aws-orange);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 24px;
+    }
+    .quiz-q {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .quiz-answer {
+      display: none;
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-size: 13.5px;
+    }
+    .quiz-answer.show { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header>
+    <div class="container nav-inner">
+      <a href="README.html" class="logo-area">
+        <span class="logo-badge">ARCH STUDY</span>
+        <span>AWS 아키텍처 다이어그램 시각학습자료</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="README.html">🏠 전체 허브</a></li>
+        <li><a href="01-architecture.html">1. 아키텍처 원본</a></li>
+        <li><a href="#components">5대 구성요소</a></li>
+        <li><a href="#traffic">트래픽 흐름</a></li>
+        <li><a href="#comparison">SG vs IAM 비교</a></li>
+        <li><a href="troubleshooting-study-guide.html">🛠️ 트러블슈팅 가이드</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-tags">
+        <span class="tag orange">AWS ARCHITECTURE SPECIFICATION</span>
+        <span class="tag blue">SEOUL REGION (ap-northeast-2)</span>
+        <span class="tag green">STATEFUL FIREWALL &amp; TRAFFIC PATH</span>
+      </div>
+      <h1 class="hero-title">아키텍처 다이어그램 1장 정밀 시각학습자료<br>[ VPC · Subnet · IGW · EC2 · Security Group &amp; 트래픽 흐름 ]</h1>
+      <p class="hero-desc">
+        Amazon Web Services 환경에서 웹 서비스 인프라를 구축할 때 필수적으로 이해해야 하는 5대 핵심 네트워크 컴포넌트(VPC, Subnet, IGW, EC2, SG)의 구조와, 외부 인터넷 클라이언트에서 실제 Nginx 웹 애플리케이션으로 이어지는 패킷 인바운드/아웃바운드 흐름을 완벽히 마스터할 수 있는 교육용 명세서입니다.
+      </p>
+    </section>
+
+    <!-- 1. The 1-Page Architecture Diagram -->
+    <section class="section-card">
+      <div class="section-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon">📐</div>
+          <div>
+            <h2 class="sec-title">아키텍처 다이어그램 1장 (고해상도 벡터 뷰)</h2>
+            <p class="sec-sub">docs/architecture.svg / png / pdf 3종 통합 제공</p>
+          </div>
+        </div>
+        <div class="diagram-actions">
+          <a href="docs/architecture.pdf" target="_blank" class="btn btn-orange">📄 PDF 문서 다운로드</a>
+          <a href="docs/architecture.png" target="_blank" class="btn btn-outline">🖼️ 원본 PNG 보기</a>
+        </div>
+      </div>
+
+      <!-- Embedded Vector Diagram -->
+      <div class="diagram-view-box">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" width="1000" height="680" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+          <rect width="1000" height="680" fill="#F8FAFC" rx="16"/>
+          <rect x="0" y="0" width="1000" height="8" fill="#FF9900"/>
+          <text x="500" y="42" text-anchor="middle" font-size="22" font-weight="800" fill="#232F3E">AWS 웹 서비스 아키텍처 다이어그램</text>
+          <text x="500" y="66" text-anchor="middle" font-size="13" fill="#545B64">서울 리전 (ap-northeast-2) · VPC 격리 네트워크 &amp; 최소권한 보안 구성</text>
+          <defs>
+            <marker id="arrowBlue" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0073BB"/>
+            </marker>
+            <marker id="arrowOrange" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#FF9900"/>
+            </marker>
+            <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.06"/>
+            </filter>
+          </defs>
+          <!-- External Users -->
+          <rect x="220" y="95" width="240" height="60" rx="12" fill="#FFFFFF" stroke="#0073BB" stroke-width="1.8" filter="url(#cardShadow)"/>
+          <text x="340" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#0073BB">🌐 외부 사용자 (Internet)</text>
+          <text x="340" y="142" text-anchor="middle" font-size="12" fill="#545B64">0.0.0.0/0 (웹 브라우저 / curl)</text>
+
+          <!-- Admin User -->
+          <rect x="540" y="95" width="240" height="60" rx="12" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.8" filter="url(#cardShadow)"/>
+          <text x="660" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#232F3E">💻 관리자 PC (Admin)</text>
+          <text x="660" y="142" text-anchor="middle" font-size="12" fill="#545B64">내 공인 IP/32 (SSH 터미널)</text>
+
+          <!-- Traffic Arrows -->
+          <path d="M340,155 L340,185 L460,185 L460,205" fill="none" stroke="#0073BB" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrowBlue)"/>
+          <text x="365" y="180" font-size="11" font-weight="600" fill="#0073BB">HTTP :80</text>
+
+          <path d="M660,155 L660,185 L540,185 L540,205" fill="none" stroke="#232F3E" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrowBlue)"/>
+          <text x="605" y="180" font-size="11" font-weight="600" fill="#232F3E">SSH :22</text>
+
+          <!-- AWS Region -->
+          <rect x="50" y="195" width="900" height="465" rx="16" fill="#F2F3F3" stroke="#232F3E" stroke-width="2" stroke-dasharray="8,4"/>
+          <text x="80" y="222" font-size="13" font-weight="800" fill="#232F3E">AWS Region: Seoul (ap-northeast-2)</text>
+
+          <!-- IGW -->
+          <rect x="400" y="210" width="200" height="52" rx="10" fill="#FF9900" filter="url(#cardShadow)"/>
+          <text x="500" y="233" text-anchor="middle" font-size="14" font-weight="800" fill="#FFFFFF">🔀 Internet Gateway</text>
+          <text x="500" y="251" text-anchor="middle" font-size="11" fill="#FFF2DC">mission-igw (양방향 게이트웨이)</text>
+
+          <!-- VPC -->
+          <rect x="70" y="275" width="860" height="365" rx="14" fill="#FFFFFF" stroke="#FF9900" stroke-width="2.2" filter="url(#cardShadow)"/>
+          <rect x="70" y="275" width="260" height="30" rx="14" fill="#FF9900"/>
+          <text x="85" y="295" font-size="12" font-weight="800" fill="#FFFFFF">VPC: mission-vpc (10.0.0.0/16)</text>
+
+          <!-- Public Subnet -->
+          <rect x="95" y="320" width="810" height="300" rx="12" fill="#EBF8FF" stroke="#0073BB" stroke-width="2"/>
+          <text x="115" y="342" font-size="13" font-weight="800" fill="#0073BB">Public Subnet (10.0.1.0/24) · AZ: ap-northeast-2a</text>
+
+          <!-- Route Table -->
+          <rect x="115" y="360" width="250" height="90" rx="8" fill="#FFFFFF" stroke="#0073BB" stroke-width="1.2" filter="url(#cardShadow)"/>
+          <text x="130" y="380" font-size="12" font-weight="700" fill="#0073BB">📋 Route Table (mission-rtb)</text>
+          <text x="130" y="400" font-size="11" fill="#232F3E">10.0.0.0/16 → local</text>
+          <text x="130" y="418" font-size="11" font-weight="700" fill="#1D8102">0.0.0.0/0 → mission-igw</text>
+          <text x="130" y="436" font-size="10" fill="#545B64">✔ 아웃바운드 인터넷 경로 보장</text>
+
+          <!-- IAM -->
+          <rect x="115" y="465" width="250" height="135" rx="8" fill="#FFFFFF" stroke="#D13212" stroke-width="1.2" filter="url(#cardShadow)"/>
+          <text x="130" y="487" font-size="12" font-weight="700" fill="#D13212">🔑 IAM 최소권한 정책</text>
+          <text x="130" y="507" font-size="11" fill="#232F3E">주체: <strong>mission-deployer</strong></text>
+          <text x="130" y="525" font-size="11" fill="#1D8102">✔ EC2/VPC/SG 전용 권한 허용</text>
+          <text x="130" y="543" font-size="11" fill="#D13212">✖ AdministratorAccess 금지</text>
+          <text x="130" y="561" font-size="11" fill="#545B64">✖ S3, RDS, DynamoDB 미부여</text>
+          <text x="130" y="582" font-size="10" fill="#0073BB">최소권한(Least Privilege) 준수</text>
+
+          <!-- Security Group -->
+          <rect x="395" y="360" width="490" height="240" rx="10" fill="#FFFFFF" stroke="#E07706" stroke-width="1.8" filter="url(#cardShadow)"/>
+          <text x="415" y="384" font-size="13" font-weight="800" fill="#E07706">🛡️ Security Group: mission-web-sg (Stateful)</text>
+
+          <rect x="415" y="398" width="450" height="58" rx="6" fill="#FFF8EE" stroke="#FBD38D" stroke-width="1"/>
+          <text x="425" y="416" font-size="11" font-weight="700" fill="#7B341E">[ Inbound Rules ]</text>
+          <text x="425" y="433" font-size="11" fill="#232F3E">Port 80 (HTTP) | TCP | Source: 0.0.0.0/0 (전체 오픈)</text>
+          <text x="425" y="448" font-size="11" fill="#232F3E">Port 22 (SSH)  | TCP | Source: 내 공인 IP/32 (단독 제한)</text>
+
+          <!-- EC2 -->
+          <rect x="415" y="470" width="450" height="115" rx="8" fill="#F8FAFC" stroke="#232F3E" stroke-width="1.5"/>
+          <text x="430" y="493" font-size="13" font-weight="800" fill="#232F3E">🖥️ EC2 Instance: mission-web-server</text>
+          <text x="430" y="512" font-size="11" fill="#545B64">인스턴스 유형: <strong>t2.micro / t3.micro</strong> (Free Tier)</text>
+          <text x="430" y="530" font-size="11" fill="#545B64">OS: <strong>Ubuntu 22.04 LTS</strong> | 스토리지: <strong>8GiB gp3 EBS</strong></text>
+          <text x="430" y="548" font-size="11" fill="#0073BB">웹 서버: <strong>Nginx 1.x</strong> (Port 80) / Docker Container</text>
+          <text x="430" y="567" font-size="11" font-weight="700" fill="#1D8102">고정 외부 IP: Elastic IP (54.180.1.48) 연결 완료</text>
+
+          <!-- Router Line -->
+          <path d="M500,262 L500,340 L620,340 L620,360" fill="none" stroke="#FF9900" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+          <text x="515" y="333" font-size="11" font-weight="700" fill="#FF9900">Traffic Routing (IGW → SG → EC2)</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 2. Core 5 Infrastructure Components -->
+    <section id="components" class="section-card">
+      <div class="section-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon">🧱</div>
+          <div>
+            <h2 class="sec-title">5대 핵심 구성 요소 상세 명세 및 설계 원리</h2>
+            <p class="sec-sub">각 컴포넌트의 식별자, IP 대역, 격리 역할 및 엔지니어링 체크포인트</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="comp-grid">
+        <!-- 1. VPC -->
+        <div class="comp-card">
+          <div class="comp-top">
+            <div class="comp-badge-row">
+              <span class="comp-num-badge">COMPONENT 1</span>
+              <span class="comp-type">Network Isolation</span>
+            </div>
+            <h3 class="comp-name">Virtual Private Cloud (VPC)</h3>
+            <p class="comp-desc">
+              서울 리전(<code>ap-northeast-2</code>) 내에 <strong>CIDR <code>10.0.0.0/16</code></strong>(총 65,536개 사설 IP)의 전용 사설망을 구축하여 다른 고객 및 공용 인터넷과 논리적으로 완벽히 격리된 독립 가상 네트워크를 제공합니다.
+            </p>
+          </div>
+          <div class="comp-spec">
+            <span>식별자: mission-vpc</span>
+            <span>대역: 10.0.0.0/16</span>
+          </div>
+        </div>
+
+        <!-- 2. Subnet -->
+        <div class="comp-card">
+          <div class="comp-top">
+            <div class="comp-badge-row">
+              <span class="comp-num-badge">COMPONENT 2</span>
+              <span class="comp-type">Subnet Partition</span>
+            </div>
+            <h3 class="comp-name">Public Subnet (퍼블릭 서브넷)</h3>
+            <p class="comp-desc">
+              가용영역 <code>ap-northeast-2a</code>에 <strong>CIDR <code>10.0.1.0/24</code></strong>(가용 IP 251개)를 할당했습니다. AWS가 예약한 5개 IP를 제외한 대역을 웹 서버 및 관문 서비스에 배정하며 자동 공인 IP 매핑을 활성화했습니다.
+            </p>
+          </div>
+          <div class="comp-spec">
+            <span>식별자: mission-public-subnet</span>
+            <span>AZ: ap-northeast-2a</span>
+          </div>
+        </div>
+
+        <!-- 3. Internet Gateway -->
+        <div class="comp-card">
+          <div class="comp-top">
+            <div class="comp-badge-row">
+              <span class="comp-num-badge">COMPONENT 3</span>
+              <span class="comp-type">Edge Gateway</span>
+            </div>
+            <h3 class="comp-name">Internet Gateway (IGW)</h3>
+            <p class="comp-desc">
+              VPC와 인터넷을 연결하는 완전 관리형, 고가용성, 수평 확장형 양방향 통신 관문입니다. 인스턴스의 프라이빗 IP와 공인 IP 간의 1:1 네트워크 주소 변환(NAT)을 수행하여 병목 없이 패킷을 라우팅합니다.
+            </p>
+          </div>
+          <div class="comp-spec">
+            <span>식별자: mission-igw</span>
+            <span>연결: VPC Attached</span>
+          </div>
+        </div>
+
+        <!-- 4. Security Group -->
+        <div class="comp-card">
+          <div class="comp-top">
+            <div class="comp-badge-row">
+              <span class="comp-num-badge">COMPONENT 4</span>
+              <span class="comp-type">Virtual Firewall</span>
+            </div>
+            <h3 class="comp-name">Security Group (보안 그룹)</h3>
+            <p class="comp-desc">
+              인스턴스 단위의 <strong>상태 저장(Stateful)</strong> 가상 방화벽입니다. HTTP 80은 <code>0.0.0.0/0</code>(전체) 오픈하고, SSH 22는 관리자 단일 IP(<code>/32</code>)로 제한하여 0-65535 전체 포트 침투를 원천 폐쇄(Default Deny)했습니다.
+            </p>
+          </div>
+          <div class="comp-spec">
+            <span>그룹명: mission-web-sg</span>
+            <span>동작: Stateful Filter</span>
+          </div>
+        </div>
+
+        <!-- 5. EC2 & Elastic IP -->
+        <div class="comp-card">
+          <div class="comp-top">
+            <div class="comp-badge-row">
+              <span class="comp-num-badge">COMPONENT 5</span>
+              <span class="comp-type">Compute &amp; Static IP</span>
+            </div>
+            <h3 class="comp-name">EC2 Instance &amp; Elastic IP</h3>
+            <p class="comp-desc">
+              프리티어 규격인 <code>t2.micro</code>(Ubuntu 22.04 LTS, 8GiB gp3)에 Nginx 1.x를 실행하고, 인스턴스 재부팅 후에도 공인 IP가 유지되도록 탄력적 고정 IP(<code>54.180.1.48</code>)를 1:1 바인딩했습니다.
+            </p>
+          </div>
+          <div class="comp-spec">
+            <span>인스턴스: mission-web-server</span>
+            <span>고정IP: 54.180.1.48</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. External to Service Traffic Flow -->
+    <section id="traffic" class="section-card">
+      <div class="section-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon">🚀</div>
+          <div>
+            <h2 class="sec-title">외부 → 서비스 인바운드 트래픽 흐름 (7단계 패킷 여정)</h2>
+            <p class="sec-sub">브라우저 요청이 인스턴스 커널을 거쳐 클라이언트로 반환되기까지의 End-to-End 라이프사이클</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="traffic-flow">
+        <div class="traffic-step">
+          <span class="step-pill sp-in">STEP 1</span>
+          <div class="step-node">🌐 클라이언트 요청</div>
+          <div class="step-detail">사용자가 브라우저나 curl에서 <code>http://54.180.1.48:80</code>을 호출하여 TCP SYN 패킷을 공용 인터넷망으로 송신합니다.</div>
+        </div>
+
+        <div class="traffic-step">
+          <span class="step-pill sp-in">STEP 2</span>
+          <div class="step-node">🔀 Internet Gateway</div>
+          <div class="step-detail">AWS 엣지 백본망을 통해 패킷이 <code>mission-igw</code>에 도달하고, 목적지 EIP를 VPC 내부 인스턴스 사설 IP로 변환(Destination NAT)합니다.</div>
+        </div>
+
+        <div class="traffic-step">
+          <span class="step-pill sp-in">STEP 3</span>
+          <div class="step-node">📋 Route Table 조회</div>
+          <div class="step-detail">VPC 라우터가 서브넷 라우팅 테이블(<code>mission-rtb</code>)을 참조하여 목적지 <code>10.0.1.0/24</code>가 속한 퍼블릭 서브넷으로 패킷을 포워딩합니다.</div>
+        </div>
+
+        <div class="traffic-step">
+          <span class="step-pill sp-sg">STEP 4</span>
+          <div class="step-node">🛡️ Security Group 검사</div>
+          <div class="step-detail"><code>mission-web-sg</code>의 인바운드 규칙을 검사합니다. 포트 80은 <code>0.0.0.0/0</code> 허용 규칙에 매칭되므로 패킷 인입을 인가(Allow)합니다.</div>
+        </div>
+
+        <div class="traffic-step">
+          <span class="step-pill sp-srv">STEP 5</span>
+          <div class="step-node">🖥️ EC2 &amp; Nginx 수신</div>
+          <div class="step-detail">가상 네트워크 인터페이스(eth0)를 거쳐 리눅스 커널이 패킷을 수신하고, 포트 80을 리스닝 중인 Nginx 웹서버 데몬으로 전달합니다.</div>
+        </div>
+
+        <div class="traffic-step">
+          <span class="step-pill sp-srv">STEP 6</span>
+          <div class="step-node">📄 웹 애플리케이션 응답</div>
+          <div class="step-detail">Nginx가 요청 URL(/ 또는 /health)에 해당하는 정적 HTML 또는 "OK" 문자열과 함께 <code>HTTP/1.1 200 OK</code> 헤더를 생성합니다.</div>
+        </div>
+
+        <div class="traffic-step">
+          <span class="step-pill sp-ret">STEP 7</span>
+          <div class="step-node">↩️ Stateful 자동 반환</div>
+          <div class="step-detail"><strong>보안 그룹의 상태 저장(Stateful) 특성</strong>으로 인해, 인바운드로 승인된 세션의 응답 트래픽은 아웃바운드 규칙에 무관하게 IGW를 거쳐 클라이언트에게 즉시 회신됩니다.</div>
+        </div>
+      </div>
+
+      <!-- Outbound Flow -->
+      <div class="outbound-box">
+        <div class="outbound-title">
+          <span>🔄 인스턴스 내부 ➔ 외부 인터넷 아웃바운드 통신 흐름 (NAT)</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          EC2 내부에서 패키지 업데이트(<code>apt update</code>)나 외부 API 연동(<code>curl https://example.com</code>)을 호출할 때의 패킷 경로:
+        </p>
+        <div class="outbound-flow-chain">
+          <span class="chain-node">1. EC2 패킷 생성</span>
+          <span class="chain-arrow">➔</span>
+          <span class="chain-node">2. Route Table (0.0.0.0/0)</span>
+          <span class="chain-arrow">➔</span>
+          <span class="chain-node">3. mission-igw (Source NAT)</span>
+          <span class="chain-arrow">➔</span>
+          <span class="chain-node">4. 외부 인터넷 서버 수신</span>
+          <span class="chain-arrow">➔</span>
+          <span class="chain-node">5. HTTP/2 200 OK 응답 회신</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Security Group vs IAM Comparison -->
+    <section id="comparison" class="section-card">
+      <div class="section-head">
+        <div class="sec-title-wrap">
+          <div class="sec-icon">⚖️</div>
+          <div>
+            <h2 class="sec-title">Security Group(네트워크 방화벽) vs IAM(권한 관리) 심층 비교</h2>
+            <p class="sec-sub">클라우드 다계층 방어(Defense-in-Depth)를 구성하는 두 보안 축의 핵심 동작 차이</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th style="width: 18%;">구분 항목</th>
+              <th style="width: 41%;">🛡️ Security Group (보안 그룹)</th>
+              <th style="width: 41%;">🔑 IAM (Identity and Access Management)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>보호 대상</strong></td>
+              <td>네트워크 패킷 / 데이터 전송 계층 (L3/L4)</td>
+              <td>AWS 클라우드 제어 플레인 / Management API 호출</td>
+            </tr>
+            <tr>
+              <td><strong>제어 기준</strong></td>
+              <td>프로토콜(TCP/UDP/ICMP), 포트(80, 22), IP CIDR 블록</td>
+              <td>리소스 ARN, Action(허용/거부 API), Principal(사용자/역할)</td>
+            </tr>
+            <tr>
+              <td><strong>상태 유지 (State)</strong></td>
+              <td><strong>Stateful</strong> (인바운드 허용 시 아웃바운드 자동 통과)</td>
+              <td><strong>Stateless</strong> (매 API 요청마다 정책 전수 평가)</td>
+            </tr>
+            <tr>
+              <td><strong>기본 정책</strong></td>
+              <td>Default Deny (인바운드 명시적 허용 없으면 드롭)</td>
+              <td>Default Deny (명시적 Allow 필요, Explicit Deny 최우선)</td>
+            </tr>
+            <tr>
+              <td><strong>본 프로젝트 적용</strong></td>
+              <td>
+                • HTTP 80: <code>0.0.0.0/0</code> 전 세계 오픈<br>
+                • SSH 22: 관리자 공인 IP(<code>/32</code>) 단독 허용<br>
+                • 미사용 전체 포트(0-65535) 차단
+              </td>
+              <td>
+                • <code>AdministratorAccess</code> 전면 배제<br>
+                • EC2/VPC 프로비저닝 전용 화이트리스트 적용<br>
+                • S3, RDS, DynamoDB, IAM 명시적 Deny 격리
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. Self-Check Quiz -->
+    <section class="section-card">
+      <div class="quiz-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="color:var(--aws-orange); font-size:16px; font-weight:800;">🧠 아키텍처 핵심 자가 점검 퀴즈</h3>
+          <button class="btn btn-orange" onclick="toggleQuiz()">정답 및 해설 보기</button>
+        </div>
+        <p class="quiz-q">
+          Q. 외부 사용자가 <code>http://54.180.1.48:80</code>으로 접속할 때, 보안 그룹의 아웃바운드 규칙에 포트 80이 허용되어 있지 않더라도 브라우저로 200 OK 웹페이지가 정상 회신되는 기술적 원리는 무엇일까요?
+        </p>
+        <div id="quizAns" class="quiz-answer">
+          <strong>정답: 보안 그룹(Security Group)의 '상태 저장(Stateful)' 특성 때문입니다!</strong><br><br>
+          보안 그룹은 들어오는 패킷의 TCP 연결 상태(Connection Tracking)를 메모리에 기억합니다. 따라서 인바운드 규칙에 의해 허용된 요청에 대한 응답 트래픽(Return Traffic)은 아웃바운드 규칙에 상관없이 방화벽을 자동으로 통과하여 클라이언트에 전달됩니다. (반면 네트워크 ACL은 Stateless이므로 인바운드와 아웃바운드 양쪽 모두 규칙이 필요합니다.)
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function toggleQuiz() {
+      const el = document.getElementById("quizAns");
+      el.classList.toggle("show");
+    }
+  </script>
+</body>
+</html>

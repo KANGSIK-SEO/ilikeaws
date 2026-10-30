@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>7. 저장소 디렉토리 구조 — Ilikeaws 시각화</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --aws-navy: #0f172a;
+      --aws-card-bg: #1e293b;
+      --aws-border: #334155;
+      --aws-orange: #ff9900;
+      --aws-blue: #38bdf8;
+      --aws-green: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --bg-dark: #0b0f19;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+
+    header {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--aws-border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      overflow-x: auto;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .logo-badge {
+      background: var(--aws-orange);
+      color: #000;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .page-nav {
+      display: flex;
+      gap: 8px;
+      list-style: none;
+      flex-shrink: 0;
+    }
+    .page-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .page-nav a:hover, .page-nav a.active {
+      color: #fff;
+      background: rgba(255, 153, 0, 0.15);
+      border: 1px solid rgba(255, 153, 0, 0.35);
+    }
+
+    .page-header { padding: 40px 0 30px; }
+    .badge-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+    }
+    .badge.orange { background: rgba(255, 153, 0, 0.2); color: var(--aws-orange); }
+    .badge.green { background: rgba(16, 185, 129, 0.2); color: var(--aws-green); }
+    .page-title { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .page-desc { color: var(--text-muted); font-size: 15px; max-width: 900px; }
+
+    .block {
+      background: var(--aws-card-bg);
+      border: 1px solid var(--aws-border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+    .block-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    /* Tree View Box */
+    .tree-box {
+      background: #020617;
+      border: 1px solid var(--aws-border);
+      border-radius: 12px;
+      padding: 24px;
+      font-size: 13.5px;
+      color: #94a3b8;
+      overflow-x: auto;
+      line-height: 1.8;
+    }
+    .tree-folder { color: var(--aws-orange); font-weight: 700; }
+    .tree-file { color: #f1f5f9; font-weight: 600; }
+    .tree-comment { color: #64748b; font-style: italic; }
+
+    /* Module Grid */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+      margin-top: 20px;
+    }
+    .module-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--aws-border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .mod-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mod-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .mod-tag {
+      font-size: 11px;
+      font-family: monospace;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: var(--aws-blue);
+      display: inline-block;
+    }
+
+    /* Code Snippet */
+    .code-box {
+      background: #020617;
+      border: 1px solid var(--aws-border);
+      border-radius: 12px;
+      padding: 18px;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav-inner">
+      <a href="README.html" class="logo-area">
+        <span class="logo-badge">AWS</span>
+        <span>Ilikeaws Docs</span>
+      </a>
+      <ul class="page-nav">
+        <li><a href="README.html">🏠 전체 허브</a></li>
+        <li><a href="01-architecture.html">1. 아키텍처</a></li>
+        <li><a href="02-external-access.html">2. 접속 검증</a></li>
+        <li><a href="03-requirements-checklist.html">3. 요구사항</a></li>
+        <li><a href="04-docker-deployment.html">4. Docker 배포</a></li>
+        <li><a href="05-troubleshooting.html">5. 트러블슈팅</a></li>
+        <li><a href="06-cleanup-checklist.html">6. 자원 정리</a></li>
+        <li><a href="07-directory-structure.html" class="active">7. 저장소 구조</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-header">
+      <div class="badge-bar">
+        <span class="badge orange">SECTION 7</span>
+        <span class="badge green">아티팩트 무결성 100%</span>
+        <span class="badge">저장소 디렉토리 구조 &amp; IAM 정책</span>
+      </div>
+      <h1 class="page-title">7. 저장소 디렉토리 구조 및 핵심 아티팩트</h1>
+      <p class="page-desc">
+        프로젝트 형상 관리를 위한 디렉토리 계층 구조, 4대 필수 문서(아키텍처, 증빙, 트러블슈팅, 체크리스트), 인프라 자동화 스크립트 및 IAM 최소권한 정책 파일의 역할을 총람합니다.
+      </p>
+    </section>
+
+    <!-- Tree View -->
+    <div class="block">
+      <h2 class="block-title">📁 전체 디렉토리 트리 뷰 (Directory Tree)</h2>
+      <div class="tree-box">
+<span class="tree-folder">ilikeaws/</span>
+├── <span class="tree-file">README.md</span>                          <span class="tree-comment"># 프로젝트 종합 가이드 및 동료평가 루브릭 체크표</span>
+├── <span class="tree-file">README.html</span>                        <span class="tree-comment"># 프로젝트 통합 시각화 대시보드</span>
+├── <span class="tree-file">Dockerfile</span>                         <span class="tree-comment"># 보너스 과제용 Docker 빌드 명세서 (Alpine Nginx)</span>
+├── <span class="tree-file">docker-compose.yml</span>                 <span class="tree-comment"># Docker Compose 단일 컨테이너 실행 명세</span>
+├── <span class="tree-folder">docs/</span>
+│   ├── <span class="tree-file">architecture.png</span>               <span class="tree-comment"># [필수 1] 아키텍처 다이어그램 고해상도 PNG</span>
+│   ├── <span class="tree-file">architecture.pdf</span>               <span class="tree-comment"># [필수 1] 아키텍처 다이어그램 PDF 문서</span>
+│   ├── <span class="tree-file">architecture.svg</span>               <span class="tree-comment"># 아키텍처 원본 벡터 그래픽 (확대 왜곡 없음)</span>
+│   ├── <span class="tree-file">architecture.md</span>                <span class="tree-comment"># 인프라 명세 및 트래픽 흐름 상세 설명서</span>
+│   ├── <span class="tree-file">troubleshooting.md</span>             <span class="tree-comment"># [필수 3] 트러블슈팅 보고서 (4대 실무 사례)</span>
+│   ├── <span class="tree-file">troubleshooting.pdf</span>            <span class="tree-comment"># [필수 3] 트러블슈팅 보고서 PDF 문서</span>
+│   ├── <span class="tree-file">cleanup-checklist.md</span>           <span class="tree-comment"># [필수 4] 리소스 정리 체크리스트 및 과금 방지 보고서</span>
+│   └── <span class="tree-folder">screenshots/</span>                   <span class="tree-comment"># [필수 2] 외부 접속 및 상태 검증 스크린샷 갤러리</span>
+│       ├── <span class="tree-file">01-web-browser.png</span>         <span class="tree-comment"># 브라우저 외부 접속 증빙 화면 (http://54.180.1.48)</span>
+│       ├── <span class="tree-file">02-health-check.png</span>        <span class="tree-comment"># GET /health 200 OK 및 아웃바운드 인터넷 통신 증빙</span>
+│       ├── <span class="tree-file">03-docker-ps.png</span>           <span class="tree-comment"># 보너스 과제 2: docker ps 컨테이너 가동 증빙 화면</span>
+│       └── <span class="tree-file">04-cleanup-verified.png</span>    <span class="tree-comment"># 리소스 완전 삭제 0건 검증 화면</span>
+├── <span class="tree-folder">iam/</span>
+│   └── <span class="tree-file">minimal-deployer-policy.jsonl</span>  <span class="tree-comment"># IAM 최소권한 정책 정의 JSON (화이트리스트+Deny)</span>
+├── <span class="tree-folder">scripts/</span>
+│   ├── <span class="tree-file">setup-aws.sh</span>                   <span class="tree-comment"># AWS 리소스 자동 프로비저닝 쉘 스크립트</span>
+│   ├── <span class="tree-file">cleanup-aws.sh</span>                 <span class="tree-comment"># AWS 리소스 안전 역순 일괄 정리 스크립트</span>
+│   └── <span class="tree-file">deploy-docker.sh</span>               <span class="tree-comment"># 보너스 Docker 배포 자동화 스크립트</span>
+└── <span class="tree-folder">web/</span>
+    ├── <span class="tree-file">index.html</span>                     <span class="tree-comment"># 웹 서비스 메인 대시보드 화면 (HTML)</span>
+    ├── <span class="tree-file">health</span>                         <span class="tree-comment"># /health 고정 응답 텍스트 ("OK")</span>
+    └── <span class="tree-file">nginx.conf</span>                     <span class="tree-comment"># Nginx 가상 호스트 및 엔드포인트 라우팅 설정</span>
+      </div>
+    </div>
+
+    <!-- Core Artifact Deep Dive -->
+    <div class="block">
+      <h2 class="block-title">🔑 핵심 보안 아티팩트: IAM 최소권한 정책 명세</h2>
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 12px;">
+        <code>iam/minimal-deployer-policy.jsonl</code>: <strong>AdministratorAccess</strong>를 부여하지 않고 실습에 필수적인 EC2/VPC API만 선별 허용하며, 무관한 S3, RDS, DynamoDB, Lambda 등은 명시적으로 차단(Explicit Deny)한 교과서적 정책입니다.
+      </p>
+      <div class="code-box">
+<pre>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EC2AndVPCOperationsLeastPrivilege",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateVpc", "ec2:DeleteVpc", "ec2:DescribeVpcs", "ec2:ModifyVpcAttribute",
+        "ec2:CreateSubnet", "ec2:DeleteSubnet", "ec2:DescribeSubnets", "ec2:ModifySubnetAttribute",
+        "ec2:CreateInternetGateway", "ec2:DeleteInternetGateway", "ec2:AttachInternetGateway", "ec2:DetachInternetGateway",
+        "ec2:CreateRouteTable", "ec2:DeleteRouteTable", "ec2:CreateRoute", "ec2:AssociateRouteTable",
+        "ec2:CreateSecurityGroup", "ec2:DeleteSecurityGroup", "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:AllocateAddress", "ec2:ReleaseAddress", "ec2:AssociateAddress",
+        "ec2:RunInstances", "ec2:TerminateInstances", "ec2:DescribeInstances", "ec2:CreateTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyUnrelatedServices",
+      "Effect": "Deny",
+      "Action": [
+        "s3:*",
+        "rds:*",
+        "dynamodb:*",
+        "lambda:*",
+        "iam:CreateUser",
+        "iam:AttachUserPolicy"
+      ],
+      "Resource": "*"
+    }
+  ]
+}</pre>
+      </div>
+    </div>
+
+    <!-- 4 Directory Modules -->
+    <div class="block">
+      <h2 class="block-title">📦 서브 디렉토리별 역할 및 구성 요소</h2>
+      <div class="module-grid">
+        <div class="module-card">
+          <div>
+            <div class="mod-title">📁 docs/</div>
+            <p class="mod-desc">아키텍처 다이어그램(PNG/PDF/SVG), 트러블슈팅 보고서, 리소스 정리 체크리스트 및 실제 접속 캡처 보관소</p>
+          </div>
+          <span class="mod-tag">4대 필수 결과물 일체</span>
+        </div>
+
+        <div class="module-card">
+          <div>
+            <div class="mod-title">📁 scripts/</div>
+            <p class="mod-desc">setup-aws.sh (자동 구축), cleanup-aws.sh (역순 완전 삭제), deploy-docker.sh (컨테이너 배포) 쉘 스크립트</p>
+          </div>
+          <span class="mod-tag">AWS CLI 자동화 엔진</span>
+        </div>
+
+        <div class="module-card">
+          <div>
+            <div class="mod-title">📁 web/</div>
+            <p class="mod-desc">메인 인프라 대시보드(index.html), 로드밸런서용 고정 응답(health), Nginx 포트 및 라우팅 설정(nginx.conf)</p>
+          </div>
+          <span class="mod-tag">웹 애플리케이션 계층</span>
+        </div>
+
+        <div class="module-card">
+          <div>
+            <div class="mod-title">📁 iam/</div>
+            <p class="mod-desc">최소 권한 원칙(Least Privilege)을 실현한 mission-deployer 전용 정책 정의 파일 보관</p>
+          </div>
+          <span class="mod-tag">보안 거버넌스</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
